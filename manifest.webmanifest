@@ -1,0 +1,16 @@
+{
+  "name": "Spotify Stats",
+  "short_name": "Spotify Stats",
+  "description": "Ton historique d'écoute Spotify, en local.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#120F24",
+  "theme_color": "#120F24",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

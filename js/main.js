@@ -1,7 +1,9 @@
 import { DB, ingest, computeStats, fullRange, yearRange, years, isoToDay, dayToIso, search, ranking, artistOf } from './data.js';
 import { esc, dur, dateFr, fmt, store, KIND_LABEL, href, setEraArtists, thumb } from './ui.js';
 import { setupTooltips } from './charts.js';
-import { importFiles } from './importer.js';
+import { importFiles, buildFromDocs, excludeWindow } from './importer.js';
+import { demoDocs } from './demo.js';
+import { loadCovers } from './covers.js';
 import { loadSaved, save, clearSaved } from './store.js';
 import * as overview from './views/overview.js';
 import * as rankings from './views/rankings.js';
@@ -13,6 +15,14 @@ import * as sessions from './views/sessions.js';
 import * as jour from './views/jour.js';
 import * as cejour from './views/cejour.js';
 import * as calendrier from './views/calendrier.js';
+import * as comparer from './views/comparer.js';
+import * as obsessions from './views/obsessions.js';
+import * as albums from './views/albums.js';
+import * as reseau from './views/reseau.js';
+import * as voyages from './views/voyages.js';
+import * as podcasts from './views/podcasts.js';
+import * as radioView from './views/radio.js';
+import * as games from './views/games.js';
 
 const view = document.getElementById('view');
 
@@ -141,6 +151,14 @@ const ROUTES = {
   'ce-jour-la': ['cejour', cejour, false],
   sessions: ['sessions', sessions, true],
   wrapped: ['wrapped', wrapped, false],
+  comparer: ['comparer', comparer, false],
+  obsessions: ['obsessions', obsessions, true],
+  albums: ['albums', albums, true],
+  reseau: ['reseau', reseau, true],
+  voyages: ['voyages', voyages, true],
+  podcasts: ['podcasts', podcasts, true],
+  radio: ['radio', radioView, false],
+  jeux: ['games', games, false],
 };
 
 let cleanup = null;
@@ -172,7 +190,9 @@ window.addEventListener('hashchange', () => {
 });
 
 // ---------- démarrage ----------
+let CURRENT = null;
 function boot(j) {
+  CURRENT = j;
   ingest(j);
   // Couleurs des ères : les artistes qui ont dominé le plus de mois.
   const st = statsFor(fullRange(), { eras: true });
@@ -193,9 +213,34 @@ function boot(j) {
   setupPeriod();
   setupSearch();
   setupReset();
+  if (j.meta.demo) {
+    const pill = document.createElement('div');
+    pill.className = 'demo-pill';
+    pill.innerHTML = 'Données d\'exemple d\'un auditeur fictif <button type="button" class="btn small">Importer les miennes</button>';
+    pill.querySelector('button').addEventListener('click', () => { location.hash = ''; location.reload(); });
+    document.getElementById('topbar').appendChild(pill);
+    document.getElementById('resetData').hidden = true;
+  }
   lastHash = location.hash.split('?')[0];
   render();
+  // Pochettes en tâche de fond ; on redessine la page une fois reçues.
+  loadCovers(() => {
+    // On ne redessine que les pages sans état en cours (pas un jeu, la radio ou une story).
+    const page = location.hash.replace(/^#\/?/, '').split(/[/?]/)[0];
+    const safe = ['', 'classements', 'explorer', 'artiste', 'album', 'titre', 'chronologie', 'albums', 'obsessions', 'ce-jour-la', 'jour', 'sessions'];
+    if (safe.includes(page) && !['INPUT', 'SELECT'].includes(document.activeElement?.tagName)) render();
+  }).catch(() => { /* pas de pochettes */ });
 }
+
+// Bandeau « écoutes suspectes » : retire la plage choisie, enregistre et recharge.
+window.addEventListener('exclude-window', async e => {
+  const w = CURRENT?.meta.anomalies?.[e.detail];
+  if (!w) return;
+  const next = excludeWindow(CURRENT, w);
+  if (!next.meta.demo) await save(next);
+  cache.clear();
+  location.reload();
+});
 
 // Bouton « Changer de données » : efface la copie locale et revient à l'écran d'import.
 function setupReset() {
@@ -239,12 +284,24 @@ function showImport() {
     }
   };
   input.addEventListener('change', () => handle(input.files));
+  box.querySelector('#demoBtn').addEventListener('click', () => {
+    status.className = 'imp-status';
+    status.textContent = 'Génération des données d\'exemple…';
+    setTimeout(() => {
+      const j = buildFromDocs(demoDocs());
+      j.meta.demo = true;
+      boot(j);
+    }, 20);
+  });
   ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
   ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
   drop.addEventListener('drop', e => handle(e.dataTransfer.files));
 }
 
 async function start() {
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* le site marche sans */ });
+  }
   const saved = await loadSaved();
   if (saved) {
     try { boot(saved); return; } catch (err) { console.error(err); await clearSaved(); }

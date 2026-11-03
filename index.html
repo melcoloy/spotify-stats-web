@@ -6,6 +6,7 @@
   <title>Spotify Stats</title>
   <meta name="description" content="Explore tout ton historique d'écoute Spotify, directement dans ton navigateur. Tes données ne quittent jamais ton appareil.">
   <meta name="theme-color" content="#120F24">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -23,6 +24,7 @@
         <span class="drop-s">ou clique pour le choisir · fichiers <code>Streaming_History_…json</code> acceptés aussi</span>
       </label>
       <p id="importStatus" class="imp-status" role="status" aria-live="polite"></p>
+      <p class="imp-demo">Pas encore ton export ? <button type="button" class="linkbtn" id="demoBtn">Essayer avec des données d'exemple</button></p>
       <label class="imp-keep" for="remember"><input type="checkbox" id="remember" checked> Garder mes données dans ce navigateur pour la prochaine visite</label>
 
       <div class="imp-grid">
@@ -56,9 +58,18 @@
         <a href="#/chronologie" data-nav="timeline">Chronologie</a>
         <a href="#/calendrier" data-nav="calendrier">Calendrier</a>
         <a href="#/ce-jour-la" data-nav="cejour">Ce jour-là</a>
+        <a href="#/comparer" data-nav="comparer">Comparer</a>
+        <span class="nav-g">Analyses</span>
         <a href="#/sessions" data-nav="sessions">Sessions</a>
+        <a href="#/obsessions" data-nav="obsessions">Obsessions</a>
+        <a href="#/albums" data-nav="albums">Albums</a>
+        <a href="#/reseau" data-nav="reseau">Réseau</a>
+        <a href="#/voyages" data-nav="voyages">Voyages</a>
+        <a href="#/podcasts" data-nav="podcasts">Podcasts</a>
         <span class="nav-g">Pour le fun</span>
+        <a href="#/radio" data-nav="radio">Radio perso</a>
         <a href="#/wrapped" data-nav="wrapped">Wrapped</a>
+        <a href="#/jeux" data-nav="games">Jeux</a>
       </nav>
       <div class="side-foot">
         <p id="sideFoot"></p>

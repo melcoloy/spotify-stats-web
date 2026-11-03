@@ -630,3 +630,9 @@ body.importing .app { display: none; }
   .side-foot { display: block !important; width: 100%; }
   .side-foot p { display: none; }
 }
+.imp-demo { color: var(--mute); font-size: 14px; margin: 6px 0 0; }
+.imp-demo .linkbtn { font-size: 14px; color: var(--butter); }
+.demo-pill { display: inline-flex; align-items: center; gap: 10px; background: color-mix(in srgb, var(--butter) 14%, var(--panel)); border: 1px solid color-mix(in srgb, var(--butter) 40%, var(--line)); color: var(--fg); border-radius: 999px; padding: 4px 4px 4px 14px; font-size: 13px; white-space: nowrap; }
+.anom { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; }
+.anom li { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--fg); }
+@media (max-width: 820px) { .demo-pill { white-space: normal; } }

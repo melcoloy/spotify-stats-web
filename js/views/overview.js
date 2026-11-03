@@ -47,6 +47,7 @@ export function render(root, ctx) {
     </div>
     ${prev ? `<p class="note">Les pourcentages comparent avec les ${fmt(prevR.to - prevR.from + 1)} jours précédents (${dateFr(prevR.from, true)} → ${dateFr(prevR.to, true)}).</p>` : ''}
 
+    ${anomalies()}
     ${DB.meta.format === 'simple' ? `<div class="alert"><b>Export simple.</b> Tu as importé l'export « Données du compte » : il ne couvre que la dernière année et ne contient ni albums, ni appareils, ni pays, ni boutons utilisés. Pour tout voir, demande l'« Historique de streaming étendu » sur spotify.com/account/privacy.</div>` : ''}
     ${isAll ? teaser() : ''}
 
@@ -86,3 +87,22 @@ function habits(st) {
       <ul class="mini">${plat.map(p => `<li><span><i style="background:${p.c}"></i>${esc(p.label)}</span><span class="num">${dur(p.v)} · ${pct(p.v / st.sec)}</span></li>`).join('')}</ul></div>
   </div>`;
 }
+
+// Écoutes simultanées depuis plusieurs pays : signe d'un compte partagé ou piraté.
+function anomalies() {
+  const list = DB.meta.anomalies || [];
+  const ex = DB.meta.exclusions || [];
+  const when = m => { const d = Math.floor(m / 1440), x = m % 1440; return `${dateFr(d, true)} ${Math.floor(x / 60)} h ${String(x % 60).padStart(2, '0')}`; };
+  let html = '';
+  if (list.length) {
+    html += `<div class="alert"><b>Écoutes suspectes repérées.</b> Des titres ont été écoutés au même moment depuis des pays différents, ce qui arrive quand quelqu'un d'autre utilise ton compte.
+      <ul class="anom">${list.map((a, i) => `<li><span>${when(a.from)} → ${when(a.to)} · ${fmt(a.plays)} écoutes depuis ${esc(a.countries.filter(c => c !== a.home).join(', ') || a.countries.join(', '))}</span><button type="button" class="btn small" data-anom="${i}">Retirer ces écoutes</button></li>`).join('')}</ul>
+      <p class="note">Seules les écoutes venant d'un autre pays que ${esc(list[0].home)} sur cette plage sont retirées. Si ce n'était pas toi, pense aussi à changer ton mot de passe Spotify et à te déconnecter de partout.</p></div>`;
+  }
+  if (ex.length) html += `<p class="note">${fmt(DB.meta.excluded)} écoutes suspectes retirées de tes stats. Pour les remettre, réimporte ton export avec « Changer de données ».</p>`;
+  return html;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-anom]');
+  if (b) { b.disabled = true; b.textContent = 'Retrait…'; window.dispatchEvent(new CustomEvent('exclude-window', { detail: +b.dataset.anom })); }
+});

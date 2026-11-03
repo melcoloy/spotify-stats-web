@@ -51,6 +51,11 @@ async function readFiles(files, progress) {
 export async function importFiles(files, progress) {
   const docs = await readFiles([...files], progress);
   progress?.('Analyse des écoutes…');
+  return buildFromDocs(docs);
+}
+
+// Convertit des documents [{name, data}] (format Spotify) en données compactes.
+export function buildFromDocs(docs) {
   const base = n => n.split('/').pop();
   const ext = docs.filter(d => /Streaming_History_(Audio|Video)_/i.test(base(d.name)));
   const legacy = docs.filter(d => /^StreamingHistory/i.test(base(d.name)));
@@ -85,6 +90,7 @@ export async function importFiles(files, progress) {
       : 'aucun fichier d\'historique Spotify trouvé. Dépose le zip reçu de Spotify, ou les fichiers « Streaming_History_Audio_… .json ».');
   }
 
+  const anomalies = findAnomalies(music.map(x => x.r));
   const rows = music.map(x => ({ m: localMinute(x.r.ts), r: x.r, v: x.video })).sort((a, b) => a.m - b.m);
   const artists = [], albums = [], tracks = [], countries = [];
   const aIdx = new Map(), alIdx = new Map(), tIdx = new Map(), cIdx = new Map();
@@ -137,11 +143,73 @@ export async function importFiles(files, progress) {
       version: 2, format, generated: new Date().toISOString(),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       baseMinute, count: n, platforms: PLATFORMS, reasonsStart: REASONS_START, reasonsEnd: REASONS_END,
-      countries, excluded: 0, exclusions: [], anomalies: [],
+      countries, excluded: 0, exclusions: [], anomalies,
       files: docs.length,
     },
     artists, albums, tracks,
     plays: { dt, k, s, f, r: rr, c },
     podcasts: { shows, episodes, plays: { t: pt, e: pe, s: ps, v: pv } },
+  };
+}
+
+// ---------- écoutes suspectes ----------
+// Deux écoutes qui se chevauchent depuis deux pays différents ne peuvent pas venir de la même
+// personne : partage ou piratage du compte. Les écoutes suspectes proches (moins de 30 min)
+// sont regroupées en plages, et seules les plages d'au moins 5 écoutes sont signalées.
+function findAnomalies(records) {
+  const iv = [];
+  for (const r of records) {
+    if (!r.conn_country || (r.ms_played || 0) < 60000) continue;
+    const end = Date.parse(r.ts) / 1000;
+    iv.push([end - r.ms_played / 1000, end, r.conn_country.toUpperCase(), r]);
+  }
+  if (!iv.length) return [];
+  iv.sort((a, b) => a[0] - b[0]);
+  const flagged = new Set();
+  let active = [];
+  for (let i = 0; i < iv.length; i++) {
+    const [start, , country] = iv[i];
+    active = active.filter(j => iv[j][1] > start + 60);
+    for (const j of active) if (iv[j][2] !== country) { flagged.add(i); flagged.add(j); }
+    active.push(i);
+  }
+  const count = new Map();
+  for (const x of iv) count.set(x[2], (count.get(x[2]) || 0) + 1);
+  const home = [...count].sort((a, b) => b[1] - a[1])[0][0];
+  const windows = [];
+  for (const i of [...flagged].sort((a, b) => iv[a][0] - iv[b][0])) {
+    const [s, e, c, r] = iv[i];
+    const w = windows[windows.length - 1];
+    if (w && s - w.end <= 1800) { w.end = Math.max(w.end, e); w.n++; w.sec += r.ms_played / 1000; w.countries.set(c, (w.countries.get(c) || 0) + 1); }
+    else windows.push({ start: s, end: e, n: 1, sec: r.ms_played / 1000, countries: new Map([[c, 1]]) });
+  }
+  const toLocal = t => localMinute(new Date(t * 1000).toISOString());
+  return windows.filter(w => w.n >= 5).map(w => ({
+    from: toLocal(w.start - 900), to: toLocal(w.end + 900), plays: w.n, sec: Math.round(w.sec), home,
+    countries: [...w.countries].sort((a, b) => b[1] - a[1]).map(x => x[0]),
+  }));
+}
+
+// Retire d'un jeu de données compact les écoutes d'une plage suspecte (sauf celles du pays habituel).
+export function excludeWindow(j, w) {
+  const keepC = j.meta.countries.indexOf(w.home);
+  const p = j.plays, n = j.meta.count;
+  const out = { dt: [], k: [], s: [], f: [], r: [], c: [] };
+  let t = j.meta.baseMinute, prev = null, base = null, removed = 0;
+  for (let i = 0; i < n; i++) {
+    t += p.dt[i];
+    if (t >= w.from && t <= w.to && p.c[i] !== keepC) { removed++; continue; }
+    if (prev === null) { base = t; out.dt.push(0); } else out.dt.push(t - prev);
+    prev = t;
+    out.k.push(p.k[i]); out.s.push(p.s[i]); out.f.push(p.f[i]); out.r.push(p.r[i]); out.c.push(p.c[i]);
+  }
+  return {
+    ...j,
+    meta: {
+      ...j.meta, baseMinute: base, count: out.k.length, excluded: (j.meta.excluded || 0) + removed,
+      exclusions: [...(j.meta.exclusions || []), { from: w.from, to: w.to, plays: removed }],
+      anomalies: (j.meta.anomalies || []).filter(a => a.from !== w.from || a.to !== w.to),
+    },
+    plays: out,
   };
 }
