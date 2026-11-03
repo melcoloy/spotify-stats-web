@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Spotify Stats</title>
+  <meta name="description" content="Explore tout ton historique d'écoute Spotify, directement dans ton navigateur. Tes données ne quittent jamais ton appareil.">
+  <meta name="theme-color" content="#120F24">
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+</head>
+<body class="importing">
+  <section id="importScreen" class="imp" hidden>
+    <div class="imp-in">
+      <a class="brand" href="./"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>Spotify Stats</a>
+      <h1>Tout ton historique Spotify, enfin lisible.</h1>
+      <p class="imp-lede">Dépose ton export Spotify : tops par année, ères musicales, calendrier jour par jour, sessions, récap animé façon Wrapped… depuis la création de ton compte.</p>
+
+      <label class="drop" for="files">
+        <input type="file" id="files" accept=".zip,.json,application/zip,application/json" multiple>
+        <span class="drop-t">Dépose ici le zip reçu de Spotify</span>
+        <span class="drop-s">ou clique pour le choisir · fichiers <code>Streaming_History_…json</code> acceptés aussi</span>
+      </label>
+      <p id="importStatus" class="imp-status" role="status" aria-live="polite"></p>
+      <label class="imp-keep" for="remember"><input type="checkbox" id="remember" checked> Garder mes données dans ce navigateur pour la prochaine visite</label>
+
+      <div class="imp-grid">
+        <div>
+          <h2>Tes données restent chez toi</h2>
+          <p>Le fichier est lu et analysé directement dans ton navigateur. Rien n'est envoyé sur un serveur : le site n'en a pas. Tu peux tout effacer à tout moment avec « Changer de données ».</p>
+        </div>
+        <div>
+          <h2>Obtenir ton export</h2>
+          <ol>
+            <li>Va sur <a href="https://www.spotify.com/account/privacy/" target="_blank" rel="noopener">spotify.com/account/privacy</a> (depuis un navigateur, pas l'appli).</li>
+            <li>Coche <b>« Historique de streaming étendu »</b> et demande les données.</li>
+            <li>Confirme via l'e-mail de Spotify.</li>
+            <li>Quelques jours plus tard (jusqu'à 30), télécharge le zip reçu par e-mail et dépose-le ici.</li>
+          </ol>
+          <p class="imp-note">L'export « Données du compte » marche aussi, mais il ne couvre que la dernière année, sans albums.</p>
+        </div>
+      </div>
+      <p class="imp-foot">Projet indépendant et open source, non affilié à Spotify.</p>
+    </div>
+  </section>
+
+  <div class="app">
+    <aside class="side">
+      <a class="brand" href="#/"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>Spotify Stats</a>
+      <nav class="nav" aria-label="Navigation principale">
+        <span class="nav-g">Stats</span>
+        <a href="#/" data-nav="overview">Vue d'ensemble</a>
+        <a href="#/classements" data-nav="rankings">Classements</a>
+        <a href="#/explorer" data-nav="explore">Explorer</a>
+        <a href="#/chronologie" data-nav="timeline">Chronologie</a>
+        <a href="#/calendrier" data-nav="calendrier">Calendrier</a>
+        <a href="#/ce-jour-la" data-nav="cejour">Ce jour-là</a>
+        <a href="#/sessions" data-nav="sessions">Sessions</a>
+        <span class="nav-g">Pour le fun</span>
+        <a href="#/wrapped" data-nav="wrapped">Wrapped</a>
+      </nav>
+      <div class="side-foot">
+        <p id="sideFoot"></p>
+        <button type="button" class="linkbtn" id="resetData">Changer de données</button>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar" id="topbar">
+        <div class="search">
+          <label for="q" class="sr-only">Rechercher un artiste, un album ou un titre</label>
+          <input id="q" type="search" placeholder="Rechercher un artiste, un album, un titre…" autocomplete="off" spellcheck="false">
+          <div class="search-res" id="searchRes" hidden></div>
+        </div>
+        <div class="period" id="periodBar">
+          <label for="preset" class="sr-only">Période</label>
+          <select id="preset"></select>
+          <span class="custom" id="customDates" hidden>
+            <label for="from" class="sr-only">Du</label><input type="date" id="from">
+            <span aria-hidden="true">→</span>
+            <label for="to" class="sr-only">Au</label><input type="date" id="to">
+          </span>
+        </div>
+      </header>
+      <main id="view" tabindex="-1"></main>
+    </div>
+  </div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

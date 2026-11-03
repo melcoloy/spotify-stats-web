@@ -1,0 +1,10 @@
+# Ne jamais publier un export Spotify (historique complet, adresses IP)
+*.zip
+my_spotify_data/
+Spotify Extended Streaming History/
+Streaming_History*.json
+StreamingHistory*.json
+
+.DS_Store
+Thumbs.db
+.vscode/
