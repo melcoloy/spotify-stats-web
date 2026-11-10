@@ -1,24 +1,25 @@
 import { DB, ranking, computeStats, fullRange, byTrack } from '../data.js';
 import { esc, fmt, dur, store, shuffleArr, pick, spotifyUrl } from '../ui.js';
+import { loc } from '../i18n.js';
 
 const GAMES = {
-  plusoumoins: { title: 'Plus ou moins', text: 'Deux artistes : lequel as-tu le plus écouté ? Enchaîne la plus longue série possible.', run: higherLower },
-  annee: { title: 'Devine l\'année', text: 'Un titre s\'affiche : en quelle année l\'as-tu le plus écouté ?', run: g => quiz(g, yearQuestion, { key: 'annee' }) },
-  artiste: { title: 'Qui chante ?', text: 'Retrouve l\'artiste de tes propres titres.', run: g => quiz(g, artistQuestion, { key: 'artiste' }) },
-  blindtest: { title: 'Blind test', text: 'Un extrait de tes titres préférés, quatre propositions. Il faut une connexion internet.', run: g => quiz(g, blindQuestion, { key: 'blindtest', rounds: 8 }) },
-  ordre: { title: 'Remets dans l\'ordre', text: 'Classe cinq artistes du plus écouté au moins écouté.', run: orderGame },
+  plusoumoins: { title: loc`Plus ou moins`, text: loc`Deux artistes : lequel as-tu le plus écouté ? Enchaîne la plus longue série possible.`, run: higherLower },
+  annee: { title: loc`Devine l'année`, text: loc`Un titre s'affiche : en quelle année l'as-tu le plus écouté ?`, run: g => quiz(g, yearQuestion, { key: 'annee' }) },
+  artiste: { title: loc`Qui chante ?`, text: loc`Retrouve l'artiste de tes propres titres.`, run: g => quiz(g, artistQuestion, { key: 'artiste' }) },
+  blindtest: { title: loc`Blind test`, text: loc`Un extrait de tes titres préférés, quatre propositions. Il faut une connexion internet.`, run: g => quiz(g, blindQuestion, { key: 'blindtest', rounds: 8 }) },
+  ordre: { title: loc`Remets dans l'ordre`, text: loc`Classe cinq artistes du plus écouté au moins écouté.`, run: orderGame },
 };
 
 export function render(root, ctx) {
   const id = ctx.parts[1];
   if (id && GAMES[id]) {
-    root.innerHTML = `<div class="page game-page"><a class="back" href="#/jeux">← Tous les jeux</a><h1>${GAMES[id].title}</h1><p class="lede">${GAMES[id].text}</p><div class="game" id="game"></div></div>`;
+    root.innerHTML = `<div class="page game-page"><a class="back" href="#/jeux">${loc`← Tous les jeux`}</a><h1>${GAMES[id].title}</h1><p class="lede">${GAMES[id].text}</p><div class="game" id="game"></div></div>`;
     return GAMES[id].run(root.querySelector('#game'));
   }
   root.innerHTML = `<div class="page">
-    <header class="page-h"><div class="eyebrow">Jeux</div><h1>Tu connais ton Spotify ?</h1>
-      <p class="lede">Des jeux construits uniquement sur ton historique. Les meilleurs scores restent enregistrés dans ce navigateur.</p></header>
-    <div class="games">${Object.entries(GAMES).map(([k, g]) => `<a class="game-c" href="#/jeux/${k}"><h2>${g.title}</h2><p>${g.text}</p><span class="best">Record : <b class="num">${store.get('best-' + k, 0)}</b></span></a>`).join('')}</div>
+    <header class="page-h"><div class="eyebrow">${loc`Jeux`}</div><h1>${loc`Tu connais ton Spotify ?`}</h1>
+      <p class="lede">${loc`Des jeux construits uniquement sur ton historique. Les meilleurs scores restent enregistrés dans ce navigateur.`}</p></header>
+    <div class="games">${Object.entries(GAMES).map(([k, g]) => `<a class="game-c" href="#/jeux/${k}"><h2>${g.title}</h2><p>${g.text}</p><span class="best">${loc`Record :`} <b class="num">${store.get('best-' + k, 0)}</b></span></a>`).join('')}</div>
   </div>`;
 }
 
@@ -39,10 +40,10 @@ function quiz(root, makeQuestion, { key, rounds = 10 } = {}) {
     if (round >= rounds) return end();
     let q, tries = 0;
     do { q = makeQuestion(); tries++; } while (q && used.has(q.key) && tries < 30);
-    if (!q) { root.innerHTML = '<p class="empty">Pas assez de données pour ce jeu.</p>'; return; }
+    if (!q) { root.innerHTML = `<p class="empty">${loc`Pas assez de données pour ce jeu.`}</p>`; return; }
     used.add(q.key);
     round++;
-    root.innerHTML = `<div class="g-head"><span>Question <b class="num">${round}</b>/${rounds}</span><span>Score <b class="num">${score}</b></span></div>
+    root.innerHTML = `<div class="g-head"><span>${loc`Question`} <b class="num">${round}</b>/${rounds}</span><span>${loc`Score`} <b class="num">${score}</b></span></div>
       <div class="g-q">${q.prompt}</div>
       <div class="g-opts">${q.options.map((o, i) => `<button type="button" class="g-opt" data-i="${i}">${o.label}</button>`).join('')}</div>
       <div class="g-reveal" hidden></div>`;
@@ -55,7 +56,7 @@ function quiz(root, makeQuestion, { key, rounds = 10 } = {}) {
       root.querySelectorAll('.g-opt').forEach((x, i) => { x.disabled = true; if (q.options[i].correct) x.classList.add('right'); });
       if (!ok) b.classList.add('wrong');
       const rv = root.querySelector('.g-reveal');
-      rv.innerHTML = `<p><b>${ok ? 'Bien vu.' : 'Raté.'}</b> ${q.reveal}</p><button type="button" class="btn" id="gnext">${round >= rounds ? 'Voir le score' : 'Question suivante'}</button>`;
+      rv.innerHTML = `<p><b>${ok ? loc`Bien vu.` : loc`Raté.`}</b> ${q.reveal}</p><button type="button" class="btn" id="gnext">${round >= rounds ? loc`Voir le score` : loc`Question suivante`}</button>`;
       rv.hidden = false;
       rv.querySelector('#gnext').focus();
       rv.querySelector('#gnext').addEventListener('click', next);
@@ -63,9 +64,9 @@ function quiz(root, makeQuestion, { key, rounds = 10 } = {}) {
   };
   const end = () => {
     const rec = saveBest(key, score);
-    root.innerHTML = `<div class="g-end"><p class="eyebrow">Score final</p><p class="g-score num">${score}<small>/${rounds}</small></p>
-      <p>${rec ? 'Nouveau record !' : `Record : ${store.get('best-' + key, 0)}/${rounds}`}</p>
-      <div class="g-actions"><button type="button" class="btn" id="again">Rejouer</button><a class="btn ghost" href="#/jeux">Autres jeux</a></div></div>`;
+    root.innerHTML = `<div class="g-end"><p class="eyebrow">${loc`Score final`}</p><p class="g-score num">${score}<small>/${rounds}</small></p>
+      <p>${rec ? loc`Nouveau record !` : loc`Record : ${store.get('best-' + key, 0)}/${rounds}`}</p>
+      <div class="g-actions"><button type="button" class="btn" id="again">${loc`Rejouer`}</button><a class="btn ghost" href="#/jeux">${loc`Autres jeux`}</a></div></div>`;
     root.querySelector('#again').addEventListener('click', () => { round = 0; score = 0; used = new Set(); next(); });
   };
   next();
@@ -84,9 +85,9 @@ function yearQuestion() {
   const opts = shuffleArr([answer, ...shuffleArr(allYears.filter(y => y !== answer)).slice(0, 3)]).sort((a, b) => a - b);
   return {
     key: t.id,
-    prompt: `<p class="g-kick">En quelle année as-tu le plus écouté</p><p class="g-big">${esc(DB.tracks[t.id])}</p><p class="g-sub">${esc(DB.artists[DB.trackArtist[t.id]])}</p>`,
+    prompt: `<p class="g-kick">${loc`En quelle année as-tu le plus écouté`}</p><p class="g-big">${esc(DB.tracks[t.id])}</p><p class="g-sub">${esc(DB.artists[DB.trackArtist[t.id]])}</p>`,
     options: opts.map(y => ({ label: String(y), correct: y === answer })),
-    reveal: `C'était en <b>${answer}</b> (${dur(sorted[0][1])}).${sorted[1] ? ` Ensuite ${sorted[1][0]} (${dur(sorted[1][1])}).` : ''}`,
+    reveal: loc`C'était en <b>${answer}</b> (${dur(sorted[0][1])}).${sorted[1] ? ` ${loc`Ensuite ${sorted[1][0]} (${dur(sorted[1][1])}).`}` : ''}`,
   };
 }
 
@@ -97,9 +98,9 @@ function artistQuestion() {
   const opts = shuffleArr([a, ...others]);
   return {
     key: t.id,
-    prompt: `<p class="g-kick">Qui chante</p><p class="g-big">${esc(DB.tracks[t.id])}</p>`,
+    prompt: `<p class="g-kick">${loc`Qui chante`}</p><p class="g-big">${esc(DB.tracks[t.id])}</p>`,
     options: opts.map(x => ({ label: esc(DB.artists[x]), correct: x === a })),
-    reveal: `${esc(DB.tracks[t.id])}, de <b>${esc(DB.artists[a])}</b>. Tu l'as écouté ${fmt(t.streams)} fois.`,
+    reveal: loc`${esc(DB.tracks[t.id])}, de <b>${esc(DB.artists[a])}</b>. Tu l'as écouté ${fmt(t.streams)} fois.`,
   };
 }
 
@@ -111,10 +112,10 @@ function blindQuestion() {
   const opts = shuffleArr([t, ...others]);
   return {
     key: t.id,
-    prompt: `<p class="g-kick">Lance l'extrait avec le bouton lecture, à droite</p>
-      <div class="blind"><iframe title="Extrait mystère" src="https://open.spotify.com/embed/track/${DB.trackUri[t.id]}?theme=0" allow="autoplay; encrypted-media"></iframe><div class="blind-mask" aria-hidden="true">?</div></div>`,
+    prompt: `<p class="g-kick">${loc`Lance l'extrait avec le bouton lecture, à droite`}</p>
+      <div class="blind"><iframe title="${loc`Extrait mystère`}" src="https://open.spotify.com/embed/track/${DB.trackUri[t.id]}?theme=0" allow="autoplay; encrypted-media"></iframe><div class="blind-mask" aria-hidden="true">?</div></div>`,
     options: opts.map(e => ({ label: `${esc(DB.tracks[e.id])}<small>${esc(DB.artists[DB.trackArtist[e.id]])}</small>`, correct: e.id === t.id })),
-    reveal: `C'était <b>${esc(DB.tracks[t.id])}</b> de ${esc(DB.artists[DB.trackArtist[t.id]])}. <a href="${spotifyUrl(t.id)}" target="_blank" rel="noopener">L'ouvrir dans Spotify</a>`,
+    reveal: `${loc`C'était <b>${esc(DB.tracks[t.id])}</b> de ${esc(DB.artists[DB.trackArtist[t.id]])}.`} <a href="${spotifyUrl(t.id)}" target="_blank" rel="noopener">${loc`L'ouvrir dans Spotify`}</a>`,
   };
 }
 
@@ -124,12 +125,12 @@ function higherLower(root) {
   let score = 0, left = pick(pool), right;
   const draw = () => {
     do { right = pick(pool); } while (right.id === left.id || Math.abs(right.sec - left.sec) < 600);
-    root.innerHTML = `<div class="g-head"><span>Série <b class="num">${score}</b></span><span>Record <b class="num">${store.get('best-plusoumoins', 0)}</b></span></div>
+    root.innerHTML = `<div class="g-head"><span>${loc`Série`} <b class="num">${score}</b></span><span>${loc`Record`} <b class="num">${store.get('best-plusoumoins', 0)}</b></span></div>
       <div class="hl">
-        <div class="hl-c"><p class="hl-n">${esc(DB.artists[left.id])}</p><p class="hl-v num">${dur(left.sec)}</p><p class="g-sub">d'écoute au total</p></div>
-        <div class="hl-vs">vs</div>
+        <div class="hl-c"><p class="hl-n">${esc(DB.artists[left.id])}</p><p class="hl-v num">${dur(left.sec)}</p><p class="g-sub">${loc`d'écoute au total`}</p></div>
+        <div class="hl-vs">${loc`vs`}</div>
         <div class="hl-c"><p class="hl-n">${esc(DB.artists[right.id])}</p><p class="hl-v num" id="hv">?</p>
-          <div class="hl-b"><button type="button" class="btn" data-g="more">Plus</button><button type="button" class="btn" data-g="less">Moins</button></div></div>
+          <div class="hl-b"><button type="button" class="btn" data-g="more">${loc`Plus`}</button><button type="button" class="btn" data-g="less">${loc`Moins`}</button></div></div>
       </div><div class="g-reveal" hidden></div>`;
     root.querySelector('.hl-b').addEventListener('click', e => {
       const b = e.target.closest('[data-g]'); if (!b) return;
@@ -140,11 +141,11 @@ function higherLower(root) {
       const rv = root.querySelector('.g-reveal'); rv.hidden = false;
       if (ok) {
         score++;
-        rv.innerHTML = `<p><b>Bien vu.</b></p><button type="button" class="btn" id="gnext">Suivant</button>`;
+        rv.innerHTML = `<p>${loc`<b>Bien vu.</b>`}</p><button type="button" class="btn" id="gnext">${loc`Suivant`}</button>`;
         rv.querySelector('#gnext').addEventListener('click', () => { left = right; draw(); });
       } else {
         const rec = saveBest('plusoumoins', score);
-        rv.innerHTML = `<p><b>Perdu.</b> Série de ${score}${rec ? ', nouveau record !' : '.'}</p><button type="button" class="btn" id="gnext">Rejouer</button>`;
+        rv.innerHTML = `<p>${loc`<b>Perdu.</b> Série de ${score}${rec ? ', nouveau record !' : '.'}`}</p><button type="button" class="btn" id="gnext">${loc`Rejouer`}</button>`;
         rv.querySelector('#gnext').addEventListener('click', () => { score = 0; left = pick(pool); draw(); });
       }
       rv.querySelector('#gnext').focus();
@@ -162,10 +163,10 @@ function orderGame(root) {
     const truth = five.slice().sort((a, b) => b.sec - a.sec).map(e => e.id);
     let chosen = [];
     const paint = () => {
-      root.innerHTML = `<div class="g-head"><span>Manche <b class="num">${rounds + 1}</b></span><span>Points <b class="num">${total}</b></span></div>
-        <p class="g-kick">Clique dans l'ordre, du plus écouté au moins écouté.</p>
+      root.innerHTML = `<div class="g-head"><span>${loc`Manche`} <b class="num">${rounds + 1}</b></span><span>${loc`Points`} <b class="num">${total}</b></span></div>
+        <p class="g-kick">${loc`Clique dans l'ordre, du plus écouté au moins écouté.`}</p>
         <div class="ord">${five.map(e => { const p = chosen.indexOf(e.id); return `<button type="button" class="ord-b ${p >= 0 ? 'on' : ''}" data-id="${e.id}" ${p >= 0 ? 'disabled' : ''}><span class="num">${p >= 0 ? p + 1 : ''}</span>${esc(DB.artists[e.id])}</button>`; }).join('')}</div>
-        <div class="g-actions"><button type="button" class="btn ghost" id="undo" ${chosen.length ? '' : 'disabled'}>Annuler le dernier</button></div>
+        <div class="g-actions"><button type="button" class="btn ghost" id="undo" ${chosen.length ? '' : 'disabled'}>${loc`Annuler le dernier`}</button></div>
         <div class="g-reveal" hidden></div>`;
       root.querySelector('.ord').addEventListener('click', e => {
         const b = e.target.closest('.ord-b'); if (!b) return;
@@ -179,11 +180,11 @@ function orderGame(root) {
       const good = chosen.filter((id, i) => truth[i] === id).length;
       total += good; rounds++;
       const rec = saveBest('ordre', total);
-      root.innerHTML = `<div class="g-head"><span>Manche <b class="num">${rounds}</b></span><span>Points <b class="num">${total}</b></span></div>
-        <p class="g-kick"><b>${good}/5</b> bien placés.</p>
-        <ol class="ord-res">${truth.map((id, i) => `<li class="${chosen[i] === id ? 'ok' : 'ko'}"><span class="num">${i + 1}</span>${esc(DB.artists[id])}<small class="num">${dur(DB.global.artist.sec[id])}</small>${chosen[i] !== id ? `<em>tu avais mis ${esc(DB.artists[chosen[i]])}</em>` : ''}</li>`).join('')}</ol>
-        <div class="g-actions"><button type="button" class="btn" id="gnext">Manche suivante</button><button type="button" class="btn ghost" id="reset">Recommencer à zéro</button></div>
-        ${rec ? '<p class="note">Nouveau record de points.</p>' : ''}`;
+      root.innerHTML = `<div class="g-head"><span>${loc`Manche`} <b class="num">${rounds}</b></span><span>${loc`Points`} <b class="num">${total}</b></span></div>
+        <p class="g-kick">${loc`<b>${good}/5</b> bien placés.`}</p>
+        <ol class="ord-res">${truth.map((id, i) => `<li class="${chosen[i] === id ? 'ok' : 'ko'}"><span class="num">${i + 1}</span>${esc(DB.artists[id])}<small class="num">${dur(DB.global.artist.sec[id])}</small>${chosen[i] !== id ? loc`<em>tu avais mis ${esc(DB.artists[chosen[i]])}</em>` : ''}</li>`).join('')}</ol>
+        <div class="g-actions"><button type="button" class="btn" id="gnext">${loc`Manche suivante`}</button><button type="button" class="btn ghost" id="reset">${loc`Recommencer à zéro`}</button></div>
+        ${rec ? `<p class="note">${loc`Nouveau record de points.`}</p>` : ''}`;
       root.querySelector('#gnext').addEventListener('click', draw);
       root.querySelector('#reset').addEventListener('click', () => { total = 0; rounds = 0; draw(); });
     };

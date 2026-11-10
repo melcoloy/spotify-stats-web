@@ -2,6 +2,7 @@
 // Les temps sont stockés en « minutes locales naïves » (fuseau du navigateur à l'import) depuis 1970,
 // donc on lit jours/heures avec les méthodes getUTC* sans souci de fuseau.
 // T[i] est l'heure de FIN de l'écoute i (c'est ce que fournit Spotify).
+import { loc } from './i18n.js';
 
 export const DB = {
   ready: false,
@@ -34,7 +35,7 @@ const RS = {}, RE = {};
 // Construit la base en mémoire à partir de l'objet produit par l'importeur (js/importer.js).
 export function ingest(j) {
   const n = j.meta.count;
-  if (!n) throw new Error('aucune écoute de musique trouvée dans ces fichiers');
+  if (!n) throw new Error(loc`aucune écoute de musique trouvée dans ces fichiers`);
   const T = new Int32Array(n), K = new Int32Array(n), S = new Int32Array(n), F = new Uint8Array(n), R = new Uint8Array(n), C = new Uint8Array(n);
   let acc = j.meta.baseMinute;
   const p = j.plays;
@@ -508,7 +509,7 @@ export function artistTransitions(artistId) {
 // audace (0 à 1) : 0 prend toujours le plus probable, 1 tire au sort selon les probabilités brutes.
 export function radio(seed, length = 20, audace = 0.4) {
   const M = markov || buildMarkov();
-  const out = [{ id: seed, via: 'départ', p: 1 }], used = new Set([seed]);
+  const out = [{ id: seed, via: loc`départ`, p: 1 }], used = new Set([seed]);
   let cur = seed;
   for (let step = 1; step < length; step++) {
     // On garde les 12 suites les plus fréquentes : la longue traîne des enchaînements uniques n'a pas de sens.
@@ -581,15 +582,15 @@ export function albumRuns() {
 // ---------- genres ----------
 // Familles larges à partir des tags MusicBrainz (le premier tag reconnu l'emporte).
 export const FAMILIES = [
-  ['Rap / hip-hop', /(hip[ -]?hop|rap|trap|drill|grime|boom bap|cloud)/],
-  ['R&B / soul', /(r&b|rnb|rhythm and blues|soul|neo soul)/],
-  ['Latino', /(reggaeton|latin|urbano|dembow|corrido|regional mexican|bachata|cumbia|salsa|sertanejo|pagode|funk carioca|brazil)/],
-  ['Afro', /(afro|amapiano|highlife|dancehall|reggae)/],
-  ['Électro', /(electro|house|techno|edm|dance|dubstep|drum and bass|trance|synthwave)/],
-  ['Rock / metal', /(rock|metal|punk|grunge|emo|indie)/],
-  ['Pop', /(pop|boy band|chanson|variété)/],
-  ['Jazz / funk', /(jazz|funk|blues|disco)/],
-  ['B.O. / classique', /(soundtrack|classical|score|orchestra|video game)/],
+  [loc`Rap / hip-hop`, /(hip[ -]?hop|rap|trap|drill|grime|boom bap|cloud)/],
+  [loc`R&B / soul`, /(r&b|rnb|rhythm and blues|soul|neo soul)/],
+  [loc`Latino`, /(reggaeton|latin|urbano|dembow|corrido|regional mexican|bachata|cumbia|salsa|sertanejo|pagode|funk carioca|brazil)/],
+  [loc`Afro`, /(afro|amapiano|highlife|dancehall|reggae)/],
+  [loc`Électro`, /(electro|house|techno|edm|dance|dubstep|drum and bass|trance|synthwave)/],
+  [loc`Rock / metal`, /(rock|metal|punk|grunge|emo|indie)/],
+  [loc`Pop`, /(pop|boy band|chanson|variété)/],
+  [loc`Jazz / funk`, /(jazz|funk|blues|disco)/],
+  [loc`B.O. / classique`, /(soundtrack|classical|score|orchestra|video game)/],
 ];
 export function familyOf(artistId) {
   const g = DB.genres?.[artistId];
@@ -598,6 +599,6 @@ export function familyOf(artistId) {
     const t = tag.toLowerCase();
     for (const [name, re] of FAMILIES) if (re.test(t)) return name;
   }
-  return g.g && g.g.length ? 'Autre' : null;
+  return g.g && g.g.length ? loc`Autre` : null;
 }
 export const originOf = artistId => DB.genres?.[artistId]?.c || null;

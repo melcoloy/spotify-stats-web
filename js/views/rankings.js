@@ -1,8 +1,9 @@
 import { DB, ranking, nameOf, artistOf } from '../data.js';
 import { esc, fmt, store } from '../ui.js';
 import { table } from './common.js';
+import { loc } from '../i18n.js';
 
-const TYPES = [['artist', 'Artistes'], ['track', 'Titres'], ['album', 'Albums']];
+const TYPES = [['artist', loc`Artistes`], ['track', loc`Titres`], ['album', loc`Albums`]];
 const COLS = {
   artist: ['sec', 'streams', 'tracks', 'skipRate', 'doneRate', 'first', 'last'],
   track: ['sec', 'streams', 'plays', 'skipRate', 'doneRate', 'chosenRate', 'first', 'last'],
@@ -22,16 +23,16 @@ export function render(root, ctx) {
   root.innerHTML = `<div class="page">
     <header class="page-h">
       <div class="eyebrow">${esc(ctx.periodLabel)}</div>
-      <h1>Classements</h1>
+      <h1>${loc`Classements`}</h1>
     </header>
     <div class="toolbar">
-      <div class="seg" role="group" aria-label="Type de classement">${TYPES.map(([k, l]) => `<a href="#/classements?type=${k}" class="${k === type ? 'on' : ''}">${l}</a>`).join('')}</div>
-      <label class="filter"><span class="sr-only">Filtrer</span><input type="search" id="rkq" placeholder="Filtrer ${type === 'artist' ? 'les artistes' : type === 'album' ? 'les albums' : 'les titres'}…" value="${esc(q)}"></label>
-      <label class="filter small">Streams min. <input type="number" id="rkmin" min="0" step="1" value="${minStreams}"></label>
+      <div class="seg" role="group" aria-label="${loc`Type de classement`}">${TYPES.map(([k, l]) => `<a href="#/classements?type=${k}" class="${k === type ? 'on' : ''}">${l}</a>`).join('')}</div>
+      <label class="filter"><span class="sr-only">${loc`Filtrer`}</span><input type="search" id="rkq" placeholder="${loc`Filtrer ${type === 'artist' ? 'les artistes' : type === 'album' ? 'les albums' : 'les titres'}…`}" value="${esc(q)}"></label>
+      <label class="filter small">${loc`Streams min.`} <input type="number" id="rkmin" min="0" step="1" value="${minStreams}"></label>
     </div>
     <p class="note" id="rkcount"></p>
     <div id="rktbl"></div>
-    <div class="more-row"><button type="button" id="rkmore" class="btn">Afficher 50 de plus</button></div>
+    <div class="more-row"><button type="button" id="rkmore" class="btn">${loc`Afficher 50 de plus`}</button></div>
   </div>`;
 
   const draw = () => {
@@ -48,7 +49,7 @@ export function render(root, ctx) {
     const html = table(page, type, { cols: COLS[type], sortKey: sort, offset: 0 });
     root.querySelector('#rktbl').innerHTML = html;
     root.querySelectorAll('#rktbl tbody tr').forEach((tr, i) => { const c = tr.querySelector('.c-rk'); if (c && page[i]) c.textContent = page[i].rank + 1; });
-    root.querySelector('#rkcount').textContent = `${fmt(rows.length)} ${type === 'artist' ? 'artistes' : type === 'album' ? 'albums' : 'titres'}${nq || minStreams ? ' correspondent' : ''} · tri : ${sortLabel(sort)}${zapFloor ? ` (au moins ${zapFloor} lancements)` : ''} · clique sur un en-tête pour trier`;
+    root.querySelector('#rkcount').textContent = loc`${fmt(rows.length)} ${type === 'artist' ? loc`artistes` : type === 'album' ? loc`albums` : loc`titres`}${nq || minStreams ? ' ' + loc`correspondent` : ''} · tri : ${sortLabel(sort)}${zapFloor ? ` ${loc`(au moins ${zapFloor} lancements)`}` : ''} · clique sur un en-tête pour trier`;
     root.querySelector('#rkmore').hidden = rows.length <= shown;
   };
 
@@ -66,5 +67,5 @@ export function render(root, ctx) {
 }
 
 function sortLabel(k) {
-  return { sec: 'temps d\'écoute', streams: 'streams', plays: 'lancements', skipRate: 'part passée', doneRate: 'part écoutée jusqu\'au bout', chosenRate: 'part lancée exprès', tracks: 'nombre de titres', first: 'première écoute', last: 'dernière écoute', name: 'nom' }[k] || k;
+  return { sec: loc`temps d'écoute`, streams: loc`streams`, plays: loc`lancements`, skipRate: loc`part passée`, doneRate: loc`part écoutée jusqu'au bout`, chosenRate: loc`part lancée exprès`, tracks: loc`nombre de titres`, first: loc`première écoute`, last: loc`dernière écoute`, name: loc`nom` }[k] || k;
 }

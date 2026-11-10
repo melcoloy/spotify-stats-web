@@ -1,5 +1,6 @@
 import { DB, computeStats, ranking, isoToDay, dayToIso, dayRange, years } from '../data.js';
 import { esc, fmt, dur, dateFr, link, thumb, MOIS_LONG, JOURS_LONG } from '../ui.js';
+import { loc } from '../i18n.js';
 
 // Mois-jour d'aujourd'hui, à l'heure locale.
 export function todayMD() {
@@ -26,8 +27,8 @@ export function teaser(md = todayMD()) {
   const items = onThisDay(md).filter(x => x.st.plays && x.ago > 0).slice(0, 4);
   if (!items.length) return '';
   const [m, d] = md.split('-').map(Number);
-  return `<section class="block"><div class="block-h"><div><div class="eyebrow">Ce jour-là</div><h2>Un ${d} ${MOIS_LONG[m - 1]}, les autres années</h2></div><div class="block-r"><a class="more" href="#/ce-jour-la">Tout voir</a></div></div>
-    <div class="otd-strip">${items.map(x => { const t = ranking(x.st, 'track', 'plays', 1)[0]; return `<a class="otd-mini" href="#/jour/${dayToIso(x.day)}">${thumb('track', t.id, 'md')}<span><small>il y a ${x.ago} an${x.ago > 1 ? 's' : ''}</small><b>${esc(DB.tracks[t.id])}</b><em>${esc(DB.artists[DB.trackArtist[t.id]])} · ${dur(x.st.sec)} ce jour-là</em></span></a>`; }).join('')}</div></section>`;
+  return `<section class="block"><div class="block-h"><div><div class="eyebrow">${loc`Ce jour-là`}</div><h2>${loc`Un ${d} ${MOIS_LONG[m - 1]}, les autres années`}</h2></div><div class="block-r"><a class="more" href="#/ce-jour-la">${loc`Tout voir`}</a></div></div>
+    <div class="otd-strip">${items.map(x => { const t = ranking(x.st, 'track', 'plays', 1)[0]; return `<a class="otd-mini" href="#/jour/${dayToIso(x.day)}">${thumb('track', t.id, 'md')}<span>${loc`<small>il y a ${x.ago} an${x.ago > 1 ? 's' : ''}</small><b>${esc(DB.tracks[t.id])}</b><em>${esc(DB.artists[DB.trackArtist[t.id]])} · ${dur(x.st.sec)} ce jour-là</em>`}</span></a>`; }).join('')}</div></section>`;
 }
 
 export function render(root, ctx) {
@@ -38,22 +39,22 @@ export function render(root, ctx) {
   const isToday = md === todayMD();
 
   root.innerHTML = `<div class="page">
-    <header class="page-h"><div class="eyebrow">Ce jour-là</div><h1>Le ${d} ${MOIS_LONG[m - 1]}${isToday ? ', comme aujourd\'hui' : ''}</h1>
-      <p class="lede">Ce que tu écoutais à la même date, année après année.</p></header>
-    <div class="day-nav"><a class="btn ghost small" href="#/ce-jour-la?d=${shift(-1)}">← Veille</a>
-      ${isToday ? '<span></span>' : `<a class="btn ghost small" href="#/ce-jour-la">Aujourd'hui</a>`}
-      <a class="btn ghost small" href="#/ce-jour-la?d=${shift(1)}">Lendemain →</a></div>
-    <div class="otd">${items.map(x => card(x)).join('') || '<p class="empty">Cette date n\'est pas couverte par ton historique.</p>'}</div>
+    <header class="page-h"><div class="eyebrow">${loc`Ce jour-là`}</div><h1>${loc`Le ${d} ${MOIS_LONG[m - 1]}${isToday ? loc`, comme aujourd'hui` : ''}`}</h1>
+      <p class="lede">${loc`Ce que tu écoutais à la même date, année après année.`}</p></header>
+    <div class="day-nav"><a class="btn ghost small" href="#/ce-jour-la?d=${shift(-1)}">${loc`← Veille`}</a>
+      ${isToday ? '<span></span>' : `<a class="btn ghost small" href="#/ce-jour-la">${loc`Aujourd'hui`}</a>`}
+      <a class="btn ghost small" href="#/ce-jour-la?d=${shift(1)}">${loc`Lendemain →`}</a></div>
+    <div class="otd">${items.map(x => card(x)).join('') || `<p class="empty">${loc`Cette date n'est pas couverte par ton historique.`}</p>`}</div>
   </div>`;
 }
 
 function card({ y, day, ago, st }) {
-  const label = ago > 0 ? `il y a ${ago} an${ago > 1 ? 's' : ''}` : 'cette année';
-  if (!st.plays) return `<article class="otd-c empty-c"><div class="otd-h"><span class="otd-y num">${y}</span><span class="otd-a">${label}</span></div><p class="empty">Aucune écoute ce jour-là.</p></article>`;
+  const label = ago > 0 ? loc`il y a ${ago} an${ago > 1 ? 's' : ''}` : loc`cette année`;
+  if (!st.plays) return `<article class="otd-c empty-c"><div class="otd-h"><span class="otd-y num">${y}</span><span class="otd-a">${label}</span></div><p class="empty">${loc`Aucune écoute ce jour-là.`}</p></article>`;
   const tr = ranking(st, 'track', 'plays', 5), ar = ranking(st, 'artist', 'sec', 3);
   return `<article class="otd-c">
     <div class="otd-h"><span class="otd-y num">${y}</span><span class="otd-a">${label} · ${JOURS_LONG[(day + 3) % 7]}</span><span class="otd-t num">${dur(st.sec)}</span></div>
     <ol class="otd-list">${tr.map(e => `<li>${thumb('track', e.id, 'sm')}<span class="ent">${link('track', e.id, 'ent-name')}<small>${esc(DB.artists[DB.trackArtist[e.id]])}</small></span><span class="num">${fmt(e.plays)}×</span></li>`).join('')}</ol>
-    <p class="otd-f">Surtout ${ar.map(e => link('artist', e.id)).join(', ')} · <a href="#/jour/${dayToIso(day)}">voir la journée</a></p>
+    <p class="otd-f">${loc`Surtout ${ar.map(e => link('artist', e.id)).join(', ')} ·`} <a href="#/jour/${dayToIso(day)}">${loc`voir la journée`}</a></p>
   </article>`;
 }

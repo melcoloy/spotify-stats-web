@@ -1,12 +1,44 @@
+<p align="right"><b>Français</b> · <a href="README.en.md">English</a></p>
+
 # Spotify Stats
 
-Explore tout ton historique d'écoute Spotify, depuis la création de ton compte, directement
-dans ton navigateur. Tu déposes le zip que Spotify t'envoie, et le site calcule tout.
+**Tout ton historique Spotify, enfin lisible.** Tu déposes le zip que Spotify t'envoie, et le
+site calcule tout : tops par année, ères musicales, calendrier jour par jour, sessions, réseau
+d'artistes, récap animé façon Wrapped… depuis la création de ton compte.
 
-**Tes données ne quittent jamais ton appareil.** Le fichier est lu et analysé dans la page :
-il n'y a pas de serveur, rien n'est envoyé nulle part.
+**Tes données ne quittent jamais ton appareil.** Le fichier est lu et analysé dans la page : il
+n'y a pas de serveur, rien n'est envoyé nulle part.
 
-> Projet indépendant, non affilié à Spotify.
+<p>
+  <a href="https://melcoloy.github.io/spotify-stats-web/"><b>Ouvrir le site</b></a> ·
+  <a href="https://melcoloy.github.io/spotify-stats-web/?demo"><b>Voir la démo</b></a> (auditeur fictif, sans rien importer) ·
+  <a href="#obtenir-ton-export-spotify">Obtenir ton export</a>
+</p>
+
+![Vue d'ensemble](docs/screenshots/fr/overview.jpg)
+
+> Projet indépendant, non affilié à Spotify. Disponible en français et en anglais.
+
+## Aperçu
+
+<table>
+  <tr>
+    <td width="34%" valign="top"><img src="docs/screenshots/fr/wrapped.gif" alt="Récap Wrapped animé"><br><sub>Le récap façon story, pour chaque année</sub></td>
+    <td valign="top"><img src="docs/screenshots/fr/timeline.jpg" alt="Chronologie"><br><sub>Tes ères : chaque mois prend la couleur de ton artiste n°1</sub><br><br>
+      <img src="docs/screenshots/fr/network.jpg" alt="Réseau d'artistes"><br><sub>Les artistes que tu écoutes ensemble, regroupés en communautés</sub></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="50%" valign="top"><img src="docs/screenshots/fr/calendar.jpg" alt="Calendrier"><br><sub>Chaque jour de ton historique</sub></td>
+    <td width="50%" valign="top"><img src="docs/screenshots/fr/artist.jpg" alt="Page artiste"><br><sub>Une page par artiste, album et titre</sub></td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><img src="docs/screenshots/fr/travels.jpg" alt="Voyages"><br><sub>Les pays d'où tu as écouté</sub></td>
+    <td width="50%" valign="top"><img src="docs/screenshots/fr/mobile.jpg" alt="Sur téléphone"><br><sub>Pensé aussi pour le téléphone</sub></td>
+  </tr>
+</table>
 
 ## Ce que tu y trouves
 
@@ -41,9 +73,6 @@ il n'y a pas de serveur, rien n'est envoyé nulle part.
 Une barre en haut de page permet de choisir la période : tout l'historique, une année, les
 30 derniers jours ou des dates libres.
 
-**Pas encore d'export ?** Le bouton « Essayer avec des données d'exemple » charge l'historique
-d'un auditeur fictif (artistes et titres inventés).
-
 **Compte piraté ?** Le site repère les écoutes lancées au même moment depuis des pays
 différents et propose de les retirer de tes stats.
 
@@ -61,8 +90,13 @@ d'identité et de paiement de cet export ne sont jamais lus.
 
 ## Utiliser le site
 
-En ligne : ouvre la page GitHub Pages du dépôt. Après une première visite, le site marche
-aussi hors ligne et peut s'installer comme une appli (icône d'installation du navigateur).
+En ligne : [melcoloy.github.io/spotify-stats-web](https://melcoloy.github.io/spotify-stats-web/).
+Après une première visite, le site marche aussi hors ligne et peut s'installer comme une appli
+(icône d'installation du navigateur).
+
+- `?demo` à la fin de l'adresse ouvre directement les données d'exemple.
+- `?lang=en` ou `?lang=fr` force la langue. Sinon, le site suit la langue du navigateur, et le
+  bouton FR / EN permet de changer à tout moment.
 
 En local : le site utilise des modules JavaScript, qui ne se chargent pas en ouvrant
 `index.html` directement. Lance un petit serveur dans le dossier :
@@ -91,13 +125,24 @@ js/importer.js      lecture du zip / des JSON et conversion en format compact
 js/store.js         copie locale facultative dans le navigateur (IndexedDB)
 js/demo.js          générateur de données d'exemple
 js/covers.js        pochettes via l'oEmbed public de Spotify, si le navigateur l'autorise
+js/i18n.js          traduction : le texte français sert de clé
+js/i18n-en.js       dictionnaire anglais
 data/world.json     contours des pays (Natural Earth, via world-atlas)
 sw.js               service worker (mode hors ligne)
 js/data.js          calcul de toutes les statistiques
 js/charts.js        graphiques SVG
 js/views/           une vue par page
 js/vendor/fflate.js décompression du zip (fflate, licence MIT)
+docs/               captures d'écran et image d'aperçu du dépôt
 ```
+
+### Ajouter une langue
+
+Les textes de l'interface sont écrits en français dans le code, entourés de ``loc`…` ``.
+`js/i18n-en.js` associe chaque phrase française à sa traduction, avec `{0}`, `{1}`… à la place
+des valeurs. Pour une nouvelle langue : copie ce fichier, traduis les valeurs, puis ajoute-le
+dans `js/i18n.js`. Une phrase oubliée s'affiche en français et apparaît dans
+`window.__i18nMissing`, dans la console du navigateur.
 
 ### Définitions
 

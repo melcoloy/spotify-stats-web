@@ -1,6 +1,7 @@
 import { DB, years, yearRange, fullRange, ranking, discoveries, coverOf } from '../data.js';
-import { esc, fmt, dur, pct, dateFr, JOURS_LONG, spotifyUrl, store } from '../ui.js';
+import { esc, fmt, dur, pct, dateFr, JOURS_LONG, spotifyUrl, store, hourLabel } from '../ui.js';
 import { bestSlot } from './common.js';
+import { loc } from '../i18n.js';
 
 const SLIDE_MS = 7000;
 const BG = ['#2A1E6B', '#C2412F', '#123F5A', '#6B1F4C', '#1F5A43', '#4A2A86', '#8A5A00', '#14324F', '#5C1E2E', '#2E3F12', '#3B2470', '#191433'];
@@ -9,14 +10,14 @@ export function render(root, ctx) {
   const ys = years();
   const y = ctx.parts[1];
   root.innerHTML = `<div class="page">
-    <header class="page-h"><div class="eyebrow">Wrapped</div><h1>Ton récap, version story</h1>
-      <p class="lede">Choisis une année et laisse défiler. Clique à droite pour avancer, à gauche pour revenir, maintiens pour mettre en pause. Flèches du clavier et Échap marchent aussi.</p></header>
+    <header class="page-h"><div class="eyebrow">${loc`Wrapped`}</div><h1>${loc`Ton récap, version story`}</h1>
+      <p class="lede">${loc`Choisis une année et laisse défiler. Clique à droite pour avancer, à gauche pour revenir, maintiens pour mettre en pause. Flèches du clavier et Échap marchent aussi.`}</p></header>
     <div class="wr-pick">${ys.slice().reverse().map(yy => {
       const st = ctx.statsFor(yearRange(yy));
       const a = st.plays ? ranking(st, 'artist', 'sec', 1)[0] : null;
       return `<a class="wr-y" href="#/wrapped/${yy}" style="--bg:${BG[yy % BG.length]}"><span class="num">${yy}</span><small>${a ? esc(DB.artists[a.id]) : '—'} · ${dur(st.sec)}</small></a>`;
     }).join('')}
-      <a class="wr-y all" href="#/wrapped/tout" style="--bg:#120F24"><span>Tout</span><small>${ys[0]} → ${ys[ys.length - 1]}</small></a>
+      <a class="wr-y all" href="#/wrapped/tout" style="--bg:#120F24"><span>${loc`Tout`}</span><small>${ys[0]} → ${ys[ys.length - 1]}</small></a>
     </div>
   </div>`;
   if (!y) return;
@@ -28,7 +29,7 @@ export function render(root, ctx) {
 function buildSlides(ctx, range, label) {
   const st = ctx.statsFor(range);
   const isAll = label === 'tout';
-  const title = isAll ? 'depuis le début' : `en ${label}`;
+  const title = isAll ? loc`depuis le début` : loc`en ${label}`;
   const A = ranking(st, 'artist', 'sec', 5), T = ranking(st, 'track', 'streams', 5), AL = ranking(st, 'album', 'sec', 3);
   const disc = isAll ? [] : discoveries(st);
   const slot = bestSlot(st.heat);
@@ -46,42 +47,42 @@ function buildSlides(ctx, range, label) {
   const persona = personaOf(st, top, disc.length);
 
   const S = [];
-  S.push(`<div class="s-center"><p class="s-kick a1">Ton année musicale</p><h1 class="s-giant a2">${isAll ? 'Tout' : label}</h1><p class="s-p a3">${isAll ? `De ${dateFr(range.from, true)} à ${dateFr(range.to, true)}.` : 'On regarde ce que tu as vraiment écouté.'}</p></div>`);
-  S.push(`<div class="s-center"><p class="s-kick a1">Tu as écouté</p><h1 class="s-giant num a2" data-count="${Math.round(minutes)}">0</h1><p class="s-big a3">minutes de musique ${title}</p>
-    <p class="s-p a4">Soit ${fmt(minutes / 1440, 1)} jours complets.${prevY && prevY.sec ? ` C'est ${st.sec >= prevY.sec ? `${fmt(100 * (st.sec / prevY.sec - 1))} % de plus` : `${fmt(100 * (1 - st.sec / prevY.sec))} % de moins`} qu'en ${label - 1}.` : ''}</p></div>`);
+  S.push(`<div class="s-center"><p class="s-kick a1">${loc`Ton année musicale`}</p><h1 class="s-giant a2">${isAll ? loc`Tout` : label}</h1><p class="s-p a3">${isAll ? loc`De ${dateFr(range.from, true)} à ${dateFr(range.to, true)}.` : loc`On regarde ce que tu as vraiment écouté.`}</p></div>`);
+  S.push(`<div class="s-center"><p class="s-kick a1">${loc`Tu as écouté`}</p><h1 class="s-giant num a2" data-count="${Math.round(minutes)}">0</h1><p class="s-big a3">${loc`minutes de musique ${title}`}</p>
+    <p class="s-p a4">${loc`Soit ${fmt(minutes / 1440, 1)} jours complets.${prevY && prevY.sec ? ` ${loc`C'est ${st.sec >= prevY.sec ? loc`${fmt(100 * (st.sec / prevY.sec - 1))} % de plus` : loc`${fmt(100 * (1 - st.sec / prevY.sec))} % de moins`} qu'en ${label - 1}.`}` : ''}`}</p></div>`);
   const img = (kind, id, cls) => { const u = coverOf(kind, id); return u ? `<img class="s-cover ${cls}" src="${u}" alt="">` : ''; };
-  S.push(`<div class="s-center">${img('artist', top.id, 'round a1')}<p class="s-kick a1">Ton artiste ${isAll ? 'de tous les temps' : 'de l\'année'}</p><h1 class="s-name a2">${esc(DB.artists[top.id])}</h1>
-    <p class="s-big num a3">${dur(top.sec)}</p><p class="s-p a4">${pct(top.sec / st.sec)} de ton écoute, réparties sur ${fmt(topArtistDays)} jours différents.</p></div>`);
-  S.push(`<div><p class="s-kick a1">Tes artistes préférés</p><ol class="s-list">${A.map((e, i) => `<li class="a${i + 2}"><span class="num">${i + 1}</span><b>${esc(DB.artists[e.id])}</b><small class="num">${dur(e.sec)}</small></li>`).join('')}</ol></div>`);
-  S.push(`<div class="s-center">${img('track', topT.id, 'a1')}<p class="s-kick a1">Ton titre ${isAll ? 'de tous les temps' : 'de l\'année'}</p><h1 class="s-name a2">${esc(DB.tracks[topT.id])}</h1><p class="s-p a3">${esc(DB.artists[DB.trackArtist[topT.id]])}</p>
-    <p class="s-big num a4">${fmt(topT.streams)} écoutes</p>${spotifyUrl(topT.id) ? `<p class="a5"><a class="s-btn" href="${spotifyUrl(topT.id)}" target="_blank" rel="noopener">L'écouter sur Spotify</a></p>` : ''}</div>`);
-  S.push(`<div><p class="s-kick a1">Tes titres préférés</p><ol class="s-list">${T.map((e, i) => `<li class="a${i + 2}"><span class="num">${i + 1}</span><b>${esc(DB.tracks[e.id])}<small>${esc(DB.artists[DB.trackArtist[e.id]])}</small></b><small class="num">${fmt(e.streams)}×</small></li>`).join('')}</ol></div>`);
-  S.push(`<div class="s-center">${img('album', AL[0].id, 'a1')}<p class="s-kick a1">L'album que tu as usé</p><h1 class="s-name a2">${esc(DB.albums[AL[0].id])}</h1><p class="s-p a3">${esc(DB.artists[DB.albumArtist[AL[0].id]])} · ${dur(AL[0].sec)}</p>
-    ${AL.length > 1 ? `<p class="s-p a4">Juste derrière : ${AL.slice(1).map(e => `<b>${esc(DB.albums[e.id])}</b>`).join(' et ')}.</p>` : ''}</div>`);
+  S.push(`<div class="s-center">${img('artist', top.id, 'round a1')}<p class="s-kick a1">${loc`Ton artiste ${isAll ? loc`de tous les temps` : loc`de l'année`}`}</p><h1 class="s-name a2">${esc(DB.artists[top.id])}</h1>
+    <p class="s-big num a3">${dur(top.sec)}</p><p class="s-p a4">${loc`${pct(top.sec / st.sec)} de ton écoute, réparties sur ${fmt(topArtistDays)} jours différents.`}</p></div>`);
+  S.push(`<div><p class="s-kick a1">${loc`Tes artistes préférés`}</p><ol class="s-list">${A.map((e, i) => `<li class="a${i + 2}"><span class="num">${i + 1}</span><b>${esc(DB.artists[e.id])}</b><small class="num">${dur(e.sec)}</small></li>`).join('')}</ol></div>`);
+  S.push(`<div class="s-center">${img('track', topT.id, 'a1')}<p class="s-kick a1">${loc`Ton titre ${isAll ? loc`de tous les temps` : loc`de l'année`}`}</p><h1 class="s-name a2">${esc(DB.tracks[topT.id])}</h1><p class="s-p a3">${esc(DB.artists[DB.trackArtist[topT.id]])}</p>
+    <p class="s-big num a4">${loc`${fmt(topT.streams)} écoutes`}</p>${spotifyUrl(topT.id) ? `<p class="a5"><a class="s-btn" href="${spotifyUrl(topT.id)}" target="_blank" rel="noopener">${loc`L'écouter sur Spotify`}</a></p>` : ''}</div>`);
+  S.push(`<div><p class="s-kick a1">${loc`Tes titres préférés`}</p><ol class="s-list">${T.map((e, i) => `<li class="a${i + 2}"><span class="num">${i + 1}</span><b>${esc(DB.tracks[e.id])}<small>${esc(DB.artists[DB.trackArtist[e.id]])}</small></b><small class="num">${fmt(e.streams)}×</small></li>`).join('')}</ol></div>`);
+  S.push(`<div class="s-center">${img('album', AL[0].id, 'a1')}<p class="s-kick a1">${loc`L'album que tu as usé`}</p><h1 class="s-name a2">${esc(DB.albums[AL[0].id])}</h1><p class="s-p a3">${esc(DB.artists[DB.albumArtist[AL[0].id]])} · ${dur(AL[0].sec)}</p>
+    ${AL.length > 1 ? `<p class="s-p a4">${loc`Juste derrière : ${AL.slice(1).map(e => `<b>${esc(DB.albums[e.id])}</b>`).join(` ${loc`et`} `)}.`}</p>` : ''}</div>`);
   if (!isAll) {
-    S.push(disc.length ? `<div class="s-center"><p class="s-kick a1">Découvertes</p><h1 class="s-giant num a2">${fmt(disc.length)}</h1><p class="s-big a3">nouveaux artistes</p>
-      <p class="s-p a4">Ta plus belle trouvaille : <b>${esc(DB.artists[disc[0].id])}</b> (${dur(disc[0].sec)})${disc[1] ? `, suivie de <b>${esc(DB.artists[disc[1].id])}</b>` : ''}.</p></div>`
-      : `<div class="s-center"><p class="s-kick a1">Découvertes</p><h1 class="s-name a2">Aucune</h1><p class="s-p a3">Tu es resté fidèle à tes artistes.</p></div>`);
+    S.push(disc.length ? `<div class="s-center"><p class="s-kick a1">${loc`Découvertes`}</p><h1 class="s-giant num a2">${fmt(disc.length)}</h1><p class="s-big a3">${loc`nouveaux artistes`}</p>
+      <p class="s-p a4">${loc`Ta plus belle trouvaille : <b>${esc(DB.artists[disc[0].id])}</b> (${dur(disc[0].sec)})${disc[1] ? loc`, suivie de <b>${esc(DB.artists[disc[1].id])}</b>` : ''}.`}</p></div>`
+      : `<div class="s-center"><p class="s-kick a1">${loc`Découvertes`}</p><h1 class="s-name a2">${loc`Aucune`}</h1><p class="s-p a3">${loc`Tu es resté fidèle à tes artistes.`}</p></div>`);
   }
   const nightShare = st.night / st.sec;
-  S.push(`<div class="s-center"><p class="s-kick a1">Ton moment</p><h1 class="s-name a2">Le ${JOURS_LONG[slot.dow]}, vers ${slot.hour} h</h1>
-    <div class="s-hours a3">${hoursBars(st.heat)}</div><p class="s-p a4">${pct(nightShare)} de ton écoute tombe entre minuit et 5 h${nightShare > 0.12 ? '. Un vrai oiseau de nuit.' : '.'}</p></div>`);
-  S.push(`<div class="s-center"><p class="s-kick a1">Ton record</p><h1 class="s-giant num a2">${dur(st.bestDay.sec)}</h1><p class="s-big a3">le ${dateFr(st.bestDay.day)}</p>
-    <p class="s-p a4">Et ta plus longue série : ${fmt(st.streak.len)} jours d'affilée avec de la musique.</p></div>`);
-  S.push(`<div class="s-center"><p class="s-kick a1">Ton profil d'auditeur</p><h1 class="s-name a2">${persona.name}</h1><p class="s-p a3">${persona.text}</p></div>`);
-  S.push(`<div class="s-sum"><p class="s-kick a1">${isAll ? 'Ton historique' : 'Ton ' + label} en résumé</p>
+  S.push(`<div class="s-center"><p class="s-kick a1">${loc`Ton moment`}</p><h1 class="s-name a2">${loc`Le ${JOURS_LONG[slot.dow]}, vers ${hourLabel(slot.hour)}`}</h1>
+    <div class="s-hours a3">${hoursBars(st.heat)}</div><p class="s-p a4">${loc`${pct(nightShare)} de ton écoute tombe entre minuit et 5 h${nightShare > 0.12 ? loc`. Un vrai oiseau de nuit.` : '.'}`}</p></div>`);
+  S.push(`<div class="s-center"><p class="s-kick a1">${loc`Ton record`}</p><h1 class="s-giant num a2">${dur(st.bestDay.sec)}</h1><p class="s-big a3">${loc`le ${dateFr(st.bestDay.day)}`}</p>
+    <p class="s-p a4">${loc`Et ta plus longue série : ${fmt(st.streak.len)} jours d'affilée avec de la musique.`}</p></div>`);
+  S.push(`<div class="s-center"><p class="s-kick a1">${loc`Ton profil d'auditeur`}</p><h1 class="s-name a2">${persona.name}</h1><p class="s-p a3">${persona.text}</p></div>`);
+  S.push(`<div class="s-sum"><p class="s-kick a1">${isAll ? loc`Ton historique en résumé` : loc`Ton ${label} en résumé`}</p>
     <div class="sum-grid a2">
-      <div><small>Artistes</small><ol>${A.map(e => `<li>${esc(DB.artists[e.id])}</li>`).join('')}</ol></div>
-      <div><small>Titres</small><ol>${T.map(e => `<li>${esc(DB.tracks[e.id])}</li>`).join('')}</ol></div>
-      <div><small>Minutes</small><b class="num">${fmt(minutes)}</b></div>
-      <div><small>Profil</small><b>${persona.name}</b></div>
-    </div><p class="a3"><button type="button" class="s-btn s-png">Enregistrer en image</button></p></div>`);
+      <div>${loc`<small>Artistes</small>`}<ol>${A.map(e => `<li>${esc(DB.artists[e.id])}</li>`).join('')}</ol></div>
+      <div>${loc`<small>Titres</small>`}<ol>${T.map(e => `<li>${esc(DB.tracks[e.id])}</li>`).join('')}</ol></div>
+      <div>${loc`<small>Minutes</small>`}<b class="num">${fmt(minutes)}</b></div>
+      <div>${loc`<small>Profil</small><b>${persona.name}</b>`}</div>
+    </div><p class="a3"><button type="button" class="s-btn s-png">${loc`Enregistrer en image`}</button></p></div>`);
   S.summary = {
-    title: isAll ? 'Tout mon Spotify' : `Mon ${label} sur Spotify`,
-    sub: isAll ? `${dateFr(range.from, true)} → ${dateFr(range.to, true)}` : 'Wrapped perso',
+    title: isAll ? loc`Tout mon Spotify` : loc`Mon ${label} sur Spotify`,
+    sub: isAll ? `${dateFr(range.from, true)} → ${dateFr(range.to, true)}` : loc`Wrapped perso`,
     artists: A.map(e => DB.artists[e.id]), tracks: T.map(e => [DB.tracks[e.id], DB.artists[DB.trackArtist[e.id]]]),
     minutes: Math.round(minutes), persona: persona.name, topAlbum: DB.albums[AL[0].id],
-    file: `wrapped-${isAll ? 'tout' : label}.png`,
+    file: loc`wrapped-${isAll ? 'tout' : label}.png`,
   };
   return S;
 }
@@ -89,12 +90,12 @@ const ys = () => years();
 
 function personaOf(st, top, nDisc) {
   const share = top.sec / st.sec, skip = st.skips / st.plays, perHour = st.nArtists / Math.max(1, st.sec / 3600);
-  if (share > 0.3) return { name: 'Le fidèle', text: `Près d'un tiers de ton écoute pour un seul artiste. Quand tu aimes, tu ne fais pas semblant.` };
-  if (skip > 0.35) return { name: 'Le zappeur', text: `Tu passes ${pct(skip)} des titres avec le bouton Suivant. Tu sais ce que tu veux, et vite.` };
-  if (nDisc > 120 || perHour > 0.9) return { name: 'L\'explorateur', text: `${fmt(st.nArtists)} artistes différents. Tu passes ton temps à chercher le prochain son.` };
-  if (st.night / st.sec > 0.15) return { name: 'L\'oiseau de nuit', text: `Une grosse part de ton écoute se passe après minuit.` };
-  if (share > 0.15) return { name: 'Le passionné', text: `Un artiste en tête bien installé, mais toujours de la place pour le reste.` };
-  return { name: 'L\'éclectique', text: `Pas de favori écrasant : ton écoute se répartit sur beaucoup d'artistes.` };
+  if (share > 0.3) return { name: loc`Le fidèle`, text: loc`Près d'un tiers de ton écoute pour un seul artiste. Quand tu aimes, tu ne fais pas semblant.` };
+  if (skip > 0.35) return { name: loc`Le zappeur`, text: loc`Tu passes ${pct(skip)} des titres avec le bouton Suivant. Tu sais ce que tu veux, et vite.` };
+  if (nDisc > 120 || perHour > 0.9) return { name: loc`L'explorateur`, text: loc`${fmt(st.nArtists)} artistes différents. Tu passes ton temps à chercher le prochain son.` };
+  if (st.night / st.sec > 0.15) return { name: loc`L'oiseau de nuit`, text: loc`Une grosse part de ton écoute se passe après minuit.` };
+  if (share > 0.15) return { name: loc`Le passionné`, text: loc`Un artiste en tête bien installé, mais toujours de la place pour le reste.` };
+  return { name: loc`L'éclectique`, text: loc`Pas de favori écrasant : ton écoute se répartit sur beaucoup d'artistes.` };
 }
 
 function hoursBars(heat) {
@@ -109,13 +110,13 @@ function openStory(ctx, range, label) {
   const el = document.createElement('div');
   el.className = 'story-ov';
   el.setAttribute('role', 'dialog');
-  el.setAttribute('aria-label', `Wrapped ${label}`);
+  el.setAttribute('aria-label', loc`Wrapped ${label}`);
   el.innerHTML = `<div class="story">
     <div class="s-prog">${slides.map(() => '<span><i></i></span>').join('')}</div>
-    <button type="button" class="s-close" aria-label="Fermer">×</button>
-    <button type="button" class="s-pause" aria-label="Pause">❚❚</button>
+    <button type="button" class="s-close" aria-label="${loc`Fermer`}">×</button>
+    <button type="button" class="s-pause" aria-label="${loc`Pause`}">❚❚</button>
     ${slides.map((s, i) => `<div class="slide" style="--bg:${BG[(i + (label === 'tout' ? 0 : label)) % BG.length]}">${s}</div>`).join('')}
-    <div class="s-nav"><button type="button" class="s-prev" aria-label="Précédent"></button><button type="button" class="s-next" aria-label="Suivant"></button></div>
+    <div class="s-nav"><button type="button" class="s-prev" aria-label="${loc`Précédent`}"></button><button type="button" class="s-next" aria-label="${loc`Suivant`}"></button></div>
   </div>`;
   document.body.appendChild(el);
   document.body.classList.add('no-scroll');
@@ -220,17 +221,17 @@ async function exportPng(d, btn) {
   col(560, 'TITRES', d.tracks, 520);
   g.font = font(500, 28, 'JetBrains Mono'); g.fillStyle = 'rgba(255,255,255,.7)';
   g.fillText('MINUTES', 90, 1180); g.fillText('PROFIL', 560, 1180);
-  g.fillStyle = '#FFD166'; g.font = font(800, 110); g.fillText(Number(d.minutes).toLocaleString('fr'), 90, 1300);
+  g.fillStyle = '#FFD166'; g.font = font(800, 110); g.fillText(fmt(d.minutes), 90, 1300);
   g.fillStyle = '#FFFFFF'; fit(d.persona, 440, 800, 64); g.fillText(d.persona, 560, 1290);
   g.font = font(500, 28, 'JetBrains Mono'); g.fillStyle = 'rgba(255,255,255,.7)'; g.fillText('ALBUM', 90, 1440);
   g.fillStyle = '#FFFFFF'; fit(d.topAlbum, W - 180, 800, 56); g.fillText(d.topAlbum, 90, 1515);
-  g.font = font(500, 26, 'JetBrains Mono'); g.fillStyle = 'rgba(255,255,255,.5)'; g.fillText('Spotify Stats · projet indépendant, non affilié à Spotify', 90, H - 110);
+  g.font = font(500, 26, 'JetBrains Mono'); g.fillStyle = 'rgba(255,255,255,.5)'; g.fillText(loc`Spotify Stats · projet indépendant, non affilié à Spotify`, 90, H - 110);
   c.toBlob(blob => {
     if (!blob) return;
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = d.file;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    if (btn) { const t = btn.textContent; btn.textContent = 'Image enregistrée'; setTimeout(() => { btn.textContent = t; }, 2500); }
+    if (btn) { const t = btn.textContent; btn.textContent = loc`Image enregistrée`; setTimeout(() => { btn.textContent = t; }, 2500); }
   }, 'image/png');
 }

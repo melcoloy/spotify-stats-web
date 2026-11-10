@@ -24,6 +24,7 @@ import * as podcasts from './views/podcasts.js';
 import * as radioView from './views/radio.js';
 import * as games from './views/games.js';
 import * as spotifyView from './views/spotify.js';
+import { loc, applyStatic, langSwitch } from './i18n.js';
 
 const view = document.getElementById('view');
 
@@ -46,16 +47,16 @@ function resolveRange(p) {
 }
 
 export function periodLabel(range) {
-  if (range.from === DB.firstDay && range.to === DB.lastDay) return 'Depuis le début';
+  if (range.from === DB.firstDay && range.to === DB.lastDay) return loc`Depuis le début`;
   const y0 = dateFr(range.from, true), y1 = dateFr(range.to, true);
   return `${y0} → ${y1}`;
 }
 
 function setupPeriod() {
   const sel = document.getElementById('preset');
-  const opts = [['all', 'Tout l\'historique'], ['last30', '30 derniers jours'], ['last90', '3 derniers mois'], ['last365', '12 derniers mois']];
+  const opts = [['all', loc`Tout l'historique`], ['last30', loc`30 derniers jours`], ['last90', loc`3 derniers mois`], ['last365', loc`12 derniers mois`]];
   years().slice().reverse().forEach(y => opts.push(['y' + y, String(y)]));
-  opts.push(['custom', 'Dates personnalisées…']);
+  opts.push(['custom', loc`Dates personnalisées…`]);
   sel.innerHTML = opts.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
   const from = document.getElementById('from'), to = document.getElementById('to');
   from.min = to.min = dayToIso(DB.firstDay);
@@ -104,12 +105,12 @@ function setupSearch() {
   const q = document.getElementById('q'), box = document.getElementById('searchRes');
   let items = [], active = -1;
   const draw = () => {
-    if (!items.length) { box.innerHTML = q.value.trim() ? '<div class="sr-empty">Aucun résultat</div>' : ''; box.hidden = !q.value.trim(); return; }
+    if (!items.length) { box.innerHTML = q.value.trim() ? `<div class="sr-empty">${loc`Aucun résultat`}</div>` : ''; box.hidden = !q.value.trim(); return; }
     box.innerHTML = items.map((r, i) => {
       const sub = r.kind === 'artist' ? '' : ` · ${esc(DB.artists[artistOf(r.kind, r.id)])}`;
       const name = r.kind === 'artist' ? DB.artists[r.id] : r.kind === 'album' ? DB.albums[r.id] : DB.tracks[r.id];
       return `<a href="${href(r.kind, r.id)}" class="${i === active ? 'on' : ''}" data-i="${i}">${thumb(r.kind, r.id, 'sm')}<span class="sr-kind">${KIND_LABEL[r.kind]}</span><span class="sr-name">${esc(name)}<small>${sub}</small></span><span class="sr-v">${dur(r.sec)}</span></a>`;
-    }).join('') + `<a href="#/explorer?q=${encodeURIComponent(q.value.trim())}" class="sr-all">Voir tous les résultats</a>`;
+    }).join('') + `<a href="#/explorer?q=${encodeURIComponent(q.value.trim())}" class="sr-all">${loc`Voir tous les résultats`}</a>`;
     box.hidden = false;
   };
   q.addEventListener('input', () => { items = search(q.value, 8); active = -1; draw(); });
@@ -179,7 +180,7 @@ export function render() {
     cleanup = mod.render(view, ctx) || null;
   } catch (err) {
     console.error(err);
-    view.innerHTML = `<div class="error"><h2>Cette page n'a pas pu s'afficher</h2><p>${esc(err.message)}</p></div>`;
+    view.innerHTML = `<div class="error"><h2>${loc`Cette page n'a pas pu s'afficher`}</h2><p>${esc(err.message)}</p></div>`;
   }
 }
 
@@ -218,8 +219,11 @@ function boot(j) {
   if (j.meta.demo) {
     const pill = document.createElement('div');
     pill.className = 'demo-pill';
-    pill.innerHTML = 'Données d\'exemple d\'un auditeur fictif <button type="button" class="btn small">Importer les miennes</button>';
-    pill.querySelector('button').addEventListener('click', () => { location.hash = ''; location.reload(); });
+    pill.innerHTML = `${loc`Données d'exemple d'un auditeur fictif`} <button type="button" class="btn small">${loc`Importer les miennes`}</button>`;
+    pill.querySelector('button').addEventListener('click', () => {
+      const u = new URL(location.href); u.searchParams.delete('demo'); u.hash = '';
+      if (u.search === location.search) { location.hash = ''; location.reload(); } else location.href = u.toString();
+    });
     document.getElementById('topbar').appendChild(pill);
     document.getElementById('resetData').hidden = true;
   }
@@ -250,8 +254,8 @@ function setupReset() {
   let armed = false, timer = 0;
   b.addEventListener('click', async () => {
     if (!armed) {
-      armed = true; b.textContent = 'Cliquer encore pour confirmer';
-      timer = setTimeout(() => { armed = false; b.textContent = 'Changer de données'; }, 4000);
+      armed = true; b.textContent = loc`Cliquer encore pour confirmer`;
+      timer = setTimeout(() => { armed = false; b.textContent = loc`Changer de données`; }, 4000);
       return;
     }
     clearTimeout(timer);
@@ -272,15 +276,15 @@ function showImport() {
     status.className = 'imp-status';
     try {
       const j = await importFiles(files, msg => { status.textContent = msg; });
-      status.textContent = `${fmt(j.meta.count)} écoutes trouvées. Calcul des statistiques…`;
+      status.textContent = loc`${fmt(j.meta.count)} écoutes trouvées. Calcul des statistiques…`;
       await new Promise(r => setTimeout(r, 30));
       const kept = box.querySelector('#remember').checked ? await save(j) : false;
       boot(j);
-      if (box.querySelector('#remember').checked && !kept) console.warn('Impossible de garder les données dans ce navigateur.');
+      if (box.querySelector('#remember').checked && !kept) console.warn(loc`Impossible de garder les données dans ce navigateur.`);
     } catch (err) {
       console.error(err);
       status.className = 'imp-status err';
-      status.textContent = `Import impossible : ${err.message}`;
+      status.textContent = loc`Import impossible : ${err.message}`;
     } finally {
       drop.classList.remove('busy');
     }
@@ -288,7 +292,7 @@ function showImport() {
   input.addEventListener('change', () => handle(input.files));
   box.querySelector('#demoBtn').addEventListener('click', () => {
     status.className = 'imp-status';
-    status.textContent = 'Génération des données d\'exemple…';
+    status.textContent = loc`Génération des données d'exemple…`;
     setTimeout(() => {
       const j = buildFromDocs(demoDocs());
       j.meta.demo = true;
@@ -301,8 +305,17 @@ function showImport() {
 }
 
 async function start() {
+  applyStatic();
+  for (const id of ['impLang', 'sideLang']) { const el = document.getElementById(id); if (el) el.innerHTML = langSwitch(); }
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* le site marche sans */ });
+  }
+  // Lien direct vers la démo : ?demo (pratique pour le README).
+  if (new URLSearchParams(location.search).has('demo')) {
+    const j = buildFromDocs(demoDocs());
+    j.meta.demo = true;
+    boot(j);
+    return;
   }
   const saved = await loadSaved();
   if (saved) {

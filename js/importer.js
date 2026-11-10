@@ -3,6 +3,7 @@
 // Rien n'est envoyé sur internet : tout se passe dans cette page.
 import { unzipSync } from './vendor/fflate.js';
 import { ACCOUNT_FILES, buildAccount } from './account.js';
+import { loc } from './i18n.js';
 
 const PLATFORMS = ['iPhone', 'iPad', 'Android', 'Windows', 'macOS', 'Web', 'PlayStation', 'Enceinte / TV', 'Voiture', 'Autre'];
 const REASONS_START = ['trackdone', 'fwdbtn', 'clickrow', 'playbtn', 'remote', 'backbtn', 'appload', 'trackerror', 'switched-to-audio', 'endplay', 'reconnect', 'unknown'];
@@ -36,7 +37,7 @@ const isHistoryName = name => /Streaming_?History[^/]*\.json$/i.test(name) || AC
 async function readFiles(files, progress) {
   const out = [];
   for (const file of files) {
-    progress?.(`Lecture de ${file.name}…`);
+    progress?.(loc`Lecture de ${file.name}…`);
     const buf = new Uint8Array(await file.arrayBuffer());
     if (/\.zip$/i.test(file.name) || (buf[0] === 0x50 && buf[1] === 0x4b)) {
       const entries = unzipSync(buf, { filter: f => isHistoryName(f.name) });
@@ -51,7 +52,7 @@ async function readFiles(files, progress) {
 
 export async function importFiles(files, progress) {
   const docs = await readFiles([...files], progress);
-  progress?.('Analyse des écoutes…');
+  progress?.(loc`Analyse des écoutes…`);
   return buildFromDocs(docs);
 }
 
@@ -92,8 +93,8 @@ export function buildFromDocs(docs) {
   }
   if (!music.length) {
     throw new Error(docs.length
-      ? 'aucune écoute de musique dans ces fichiers. Vérifie que ce sont bien des fichiers « Streaming_History » de Spotify.'
-      : 'aucun fichier d\'historique Spotify trouvé. Dépose le zip reçu de Spotify, ou les fichiers « Streaming_History_Audio_… .json ».');
+      ? loc`aucune écoute de musique dans ces fichiers. Vérifie que ce sont bien des fichiers « Streaming_History » de Spotify.`
+      : loc`aucun fichier d'historique Spotify trouvé. Dépose le zip reçu de Spotify, ou les fichiers « Streaming_History_Audio_… .json ».`);
   }
 
   const anomalies = findAnomalies(music.map(x => x.r));

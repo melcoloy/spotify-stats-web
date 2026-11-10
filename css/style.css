@@ -636,3 +636,12 @@ body.importing .app { display: none; }
 .anom { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; }
 .anom li { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--fg); }
 @media (max-width: 820px) { .demo-pill { white-space: normal; } }
+
+/* Choix de la langue */
+.imp-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.lang { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; gap: 2px; }
+.lang-b { font: 600 11px var(--mono); letter-spacing: 0.06em; color: var(--mute); background: none; border: 0; border-radius: 999px; padding: 4px 9px; cursor: pointer; }
+.lang-b:hover { color: var(--fg); }
+.lang-b.on { background: var(--fg); color: var(--ink); }
+.lang-b:focus-visible { outline: 2px solid var(--butter); outline-offset: 1px; }
+#sideLang { margin-top: 10px; }

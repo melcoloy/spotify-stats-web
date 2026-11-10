@@ -1,5 +1,6 @@
 import { DB } from './data.js';
-import { esc, fmt, dur, monthLabel, dateFr, JOURS, JOURS_LONG, eraColor } from './ui.js';
+import { esc, fmt, dur, pct, monthLabel, dateFr, JOURS, JOURS_LONG, eraColor, hourLabel } from './ui.js';
+import { loc } from './i18n.js';
 
 // ---------- infobulle partagée ----------
 let tip;
@@ -43,7 +44,7 @@ export function timeChart(st, { eras = false, color = 'var(--coral)', height = 2
     for (let d = st.range.from; d <= st.range.to; d += 7) {
       let s = 0;
       for (let k = d; k < d + 7 && k <= st.range.to; k++) s += st.days.get(k) || 0;
-      bins.push({ v: s / 3600, tick: tickWeek(d), tip: `Semaine du ${dateFr(d, true)}<br><b>${dur(s)}</b>` });
+      bins.push({ v: s / 3600, tick: tickWeek(d), tip: loc`Semaine du ${dateFr(d, true)}<br><b>${dur(s)}</b>` });
     }
   } else {
     const d0 = new Date(st.range.from * 86400000), d1 = new Date(st.range.to * 86400000);
@@ -97,13 +98,13 @@ export function bars(bins, { color = 'var(--coral)', height = 240, unit = '', yF
 export function heatmap(heat) {
   const max = Math.max(1, ...heat);
   let g = '<div class="hgrid"><div></div>';
-  for (let h = 0; h < 24; h++) g += `<div class="hl">${h % 3 === 0 ? h + ' h' : ''}</div>`;
+  for (let h = 0; h < 24; h++) g += `<div class="hl">${h % 3 === 0 ? hourLabel(h) : ''}</div>`;
   for (let d = 0; d < 7; d++) {
     g += `<div class="lab">${JOURS[d]}</div>`;
     for (let h = 0; h < 24; h++) {
       const v = heat[d * 24 + h];
       const o = v ? 0.08 + 0.92 * Math.pow(v / max, 0.75) : 0.03;
-      g += `<div class="hc" style="opacity:${o.toFixed(3)}" data-tip="${JOURS_LONG[d]}, ${h} h – ${h + 1} h<br><b>${dur(v)}</b>"></div>`;
+      g += `<div class="hc" style="opacity:${o.toFixed(3)}" data-tip="${JOURS_LONG[d]}, ${hourLabel(h)} – ${hourLabel(h + 1)}<br><b>${dur(v)}</b>"></div>`;
     }
   }
   return g + '</div>';
@@ -114,7 +115,7 @@ export function hourProfile(heat) {
   const bins = [];
   for (let h = 0; h < 24; h++) {
     let s = 0; for (let d = 0; d < 7; d++) s += heat[d * 24 + h];
-    bins.push({ v: s / 3600, tick: h % 3 === 0 ? `${h} h` : '', tip: `${h} h – ${h + 1} h<br><b>${dur(s)}</b>` });
+    bins.push({ v: s / 3600, tick: h % 3 === 0 ? hourLabel(h) : '', tip: `${hourLabel(h)} – ${hourLabel(h + 1)}<br><b>${dur(s)}</b>` });
   }
   return bars(bins, { color: 'var(--butter)', height: 180, unit: 'h' });
 }
@@ -122,5 +123,5 @@ export function hourProfile(heat) {
 // Barre empilée horizontale (plateformes, etc.). items : [{label, v, c}]
 export function stackBar(items) {
   const tot = items.reduce((s, x) => s + x.v, 0) || 1;
-  return `<div class="stack">${items.map(x => `<span style="width:${(100 * x.v / tot).toFixed(2)}%;background:${x.c}" data-tip="${esc(x.label)}<br><b>${fmt(100 * x.v / tot)} %</b>"></span>`).join('')}</div>`;
+  return `<div class="stack">${items.map(x => `<span style="width:${(100 * x.v / tot).toFixed(2)}%;background:${x.c}" data-tip="${esc(x.label)}<br><b>${pct(x.v / tot)}</b>"></span>`).join('')}</div>`;
 }

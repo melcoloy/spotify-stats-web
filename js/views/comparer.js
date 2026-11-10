@@ -1,6 +1,7 @@
 import { DB, computeStats, ranking, discoveries, years, yearRange, fullRange, isoToDay, dayToIso, byArtist, previousRange } from '../data.js';
-import { esc, fmt, dur, pct, dateFr, link, entityCell, monthLabel, href } from '../ui.js';
+import { esc, fmt, dur, pct, dateFr, link, entityCell, monthLabel, href, hourLabel } from '../ui.js';
 import { section } from './common.js';
+import { loc } from '../i18n.js';
 
 const CA = 'var(--coral)', CB = 'var(--e-sky)';
 
@@ -8,9 +9,9 @@ export function render(root, ctx) {
   const p = ctx.params;
   const mode = p.mode === 'artistes' ? 'artistes' : 'periodes';
   root.innerHTML = `<div class="page">
-    <header class="page-h"><div class="eyebrow">Comparer</div><h1>Face à face</h1>
-      <p class="lede">Mets deux périodes ou deux artistes côte à côte.</p></header>
-    <div class="toolbar"><div class="seg" role="group" aria-label="Que comparer"><a href="#/comparer?mode=periodes" class="${mode === 'periodes' ? 'on' : ''}">Deux périodes</a><a href="#/comparer?mode=artistes" class="${mode === 'artistes' ? 'on' : ''}">Deux artistes</a></div></div>
+    <header class="page-h"><div class="eyebrow">${loc`Comparer`}</div><h1>${loc`Face à face`}</h1>
+      <p class="lede">${loc`Mets deux périodes ou deux artistes côte à côte.`}</p></header>
+    <div class="toolbar"><div class="seg" role="group" aria-label="${loc`Que comparer`}"><a href="#/comparer?mode=periodes" class="${mode === 'periodes' ? 'on' : ''}">${loc`Deux périodes`}</a><a href="#/comparer?mode=artistes" class="${mode === 'artistes' ? 'on' : ''}">${loc`Deux artistes`}</a></div></div>
     <div id="cmp"></div>
   </div>`;
   const out = root.querySelector('#cmp');
@@ -21,7 +22,7 @@ export function render(root, ctx) {
 // ---------- deux périodes ----------
 function periodOptions() {
   const ys = years();
-  return [['last30', '30 derniers jours'], ['prev30', '30 jours d\'avant'], ['last365', '12 derniers mois'], ['prev365', '12 mois d\'avant'], ...ys.slice().reverse().map(y => ['y' + y, String(y)]), ['all', 'Tout l\'historique']];
+  return [['last30', loc`30 derniers jours`], ['prev30', loc`30 jours d'avant`], ['last365', loc`12 derniers mois`], ['prev365', loc`12 mois d'avant`], ...ys.slice().reverse().map(y => ['y' + y, String(y)]), ['all', loc`Tout l'historique`]];
 }
 function resolve(code) {
   const last = DB.lastDay;
@@ -43,24 +44,24 @@ function periods(out, p) {
     const opts = periodOptions();
     const custom = !opts.some(o => o[0] === code);
     return `<div class="cmp-pick" style="--c:${id === 'a' ? CA : CB}"><span class="cmp-tag">${id.toUpperCase()}</span>
-      <select id="sel-${id}">${opts.map(([v, l]) => `<option value="${v}" ${v === code ? 'selected' : ''}>${l}</option>`).join('')}<option value="custom" ${custom ? 'selected' : ''}>Dates personnalisées…</option></select>
+      <select id="sel-${id}">${opts.map(([v, l]) => `<option value="${v}" ${v === code ? 'selected' : ''}>${l}</option>`).join('')}<option value="custom" ${custom ? 'selected' : ''}>${loc`Dates personnalisées…`}</option></select>
       <span class="cmp-dates" ${custom ? '' : 'hidden'}><input type="date" id="from-${id}" value="${dayToIso(r.from)}" min="${dayToIso(DB.firstDay)}" max="${dayToIso(DB.lastDay)}"> → <input type="date" id="to-${id}" value="${dayToIso(r.to)}" min="${dayToIso(DB.firstDay)}" max="${dayToIso(DB.lastDay)}"></span>
-      <small>${dateFr(r.from, true)} → ${dateFr(r.to, true)} · ${fmt(r.to - r.from + 1)} jours</small></div>`;
+      ${loc`<small>${dateFr(r.from, true)} → ${dateFr(r.to, true)} · ${fmt(r.to - r.from + 1)} jours</small>`}</div>`;
   };
   const sa = computeStats(A), sb = computeStats(B);
   const da = A.to - A.from + 1, db = B.to - B.from + 1;
   const rows = [
-    ['Temps d\'écoute', sa.sec, sb.sec, dur],
-    ['Temps par jour (moyenne)', sa.sec / da, sb.sec / db, dur],
-    ['Streams', sa.streams, sb.streams, fmt],
-    ['Titres différents', sa.nTracks, sb.nTracks, fmt],
-    ['Artistes différents', sa.nArtists, sb.nArtists, fmt],
-    ['Nouveaux artistes', discoveries(sa).length, discoveries(sb).length, fmt],
-    ['Jours avec de la musique', sa.activeDays / da, sb.activeDays / db, v => pct(v)],
-    ['Passés avec Suivant', sa.skips / (sa.plays || 1), sb.skips / (sb.plays || 1), v => pct(v), true],
-    ['Écoutés jusqu\'au bout', sa.completes / (sa.plays || 1), sb.completes / (sb.plays || 1), v => pct(v)],
-    ['En aléatoire', sa.shuffle / (sa.plays || 1), sb.shuffle / (sb.plays || 1), v => pct(v)],
-    ['Entre minuit et 5 h', sa.night / (sa.sec || 1), sb.night / (sb.sec || 1), v => pct(v)],
+    [loc`Temps d'écoute`, sa.sec, sb.sec, dur],
+    [loc`Temps par jour (moyenne)`, sa.sec / da, sb.sec / db, dur],
+    [loc`Streams`, sa.streams, sb.streams, fmt],
+    [loc`Titres différents`, sa.nTracks, sb.nTracks, fmt],
+    [loc`Artistes différents`, sa.nArtists, sb.nArtists, fmt],
+    [loc`Nouveaux artistes`, discoveries(sa).length, discoveries(sb).length, fmt],
+    [loc`Jours avec de la musique`, sa.activeDays / da, sb.activeDays / db, v => pct(v)],
+    [loc`Passés avec Suivant`, sa.skips / (sa.plays || 1), sb.skips / (sb.plays || 1), v => pct(v), true],
+    [loc`Écoutés jusqu'au bout`, sa.completes / (sa.plays || 1), sb.completes / (sb.plays || 1), v => pct(v)],
+    [loc`En aléatoire`, sa.shuffle / (sa.plays || 1), sb.shuffle / (sb.plays || 1), v => pct(v)],
+    [loc`Entre minuit et 5 h`, sa.night / (sa.sec || 1), sb.night / (sb.sec || 1), v => pct(v)],
   ];
   const ta = ranking(sa, 'artist', 'sec', 25), tb = ranking(sb, 'artist', 'sec', 25);
   const setA = new Set(ta.map(e => e.id)), setB = new Set(tb.map(e => e.id));
@@ -70,30 +71,30 @@ function periods(out, p) {
   const list = (items, other, c, isB) => `<ol class="rank cmp-rank">${items.slice(0, 10).map((e, i) => {
     const j = other.findIndex(x => x.id === e.id);
     const mv = isB
-      ? (j < 0 ? '<span class="mv new">nouveau</span>' : j === i ? '<span class="mv">=</span>' : `<span class="mv ${j > i ? 'up' : 'down'}">${j > i ? '▲' : '▼'} ${Math.abs(j - i)}</span>`)
-      : `<span class="mv">${j < 0 ? 'hors top 25 en B' : `n°${j + 1} en B`}</span>`;
+      ? (j < 0 ? `<span class="mv new">${loc`nouveau`}</span>` : j === i ? '<span class="mv">=</span>' : `<span class="mv ${j > i ? 'up' : 'down'}">${j > i ? '▲' : '▼'} ${Math.abs(j - i)}</span>`)
+      : `<span class="mv">${j < 0 ? loc`hors top 25 en B` : loc`n°${j + 1} en B`}</span>`;
     return `<li><span class="rk num">${i + 1}</span>${entityCell('artist', e.id)}<span class="rv num">${dur(e.sec)}${mv}</span><span class="rb" style="--w:${(e.sec / items[0].sec).toFixed(3)};--bar:${c}"></span></li>`;
   }).join('')}</ol>`;
 
   out.innerHTML = `<div class="cmp-picks">${picker('a', aCode, A)}${picker('b', bCode, B)}</div>
-    <div class="tbl-wrap"><table class="tbl cmp-tbl"><thead><tr><th></th><th class="n" style="color:${CA}">A</th><th class="n" style="color:${CB}">B</th><th class="n">Écart</th></tr></thead><tbody>
+    <div class="tbl-wrap"><table class="tbl cmp-tbl"><thead><tr><th></th><th class="n" style="color:${CA}">A</th><th class="n" style="color:${CB}">B</th><th class="n">${loc`Écart`}</th></tr></thead><tbody>
       ${rows.map(([label, a, b, f, invert]) => {
         const r = a ? b / a - 1 : null;
         const cls = r == null || Math.abs(r) < 0.005 ? 'flat' : (r > 0) !== !!invert ? 'up' : 'down';
-        return `<tr><td>${label}</td><td class="n num">${f(a)}</td><td class="n num">${f(b)}</td><td class="n">${r == null ? '—' : `<span class="delta ${cls}">${r > 0 ? '+' : r < 0 ? '−' : ''}${fmt(Math.abs(100 * r))} %</span>`}</td></tr>`;
+        return `<tr><td>${label}</td><td class="n num">${f(a)}</td><td class="n num">${f(b)}</td><td class="n">${r == null ? '—' : `<span class="delta ${cls}">${r > 0 ? '+' : r < 0 ? '−' : ''}${pct(Math.abs(r))}</span>`}</td></tr>`;
       }).join('')}
     </tbody></table></div>
-    <p class="note">Les moyennes par jour et les pourcentages permettent de comparer des périodes de longueurs différentes.</p>
+    <p class="note">${loc`Les moyennes par jour et les pourcentages permettent de comparer des périodes de longueurs différentes.`}</p>
     <div class="cols2">
-      ${section('Top artistes A', list(ta, tb, CA, false), { eyebrow: 'Et leur place en B' })}
-      ${section('Top artistes B', list(tb, ta, CB, true), { eyebrow: 'Évolution depuis A' })}
+      ${section(loc`Top artistes A`, list(ta, tb, CA, false), { eyebrow: loc`Et leur place en B` })}
+      ${section(loc`Top artistes B`, list(tb, ta, CB, true), { eyebrow: loc`Évolution depuis A` })}
     </div>
     <div class="cols3">
-      ${section('Seulement dans A', chips(onlyA), { eyebrow: 'Dans le top 25 de A, absents du top 25 de B' })}
-      ${section('Dans les deux', chips(both.slice(0, 12)), { eyebrow: `${both.length} artistes en commun` })}
-      ${section('Seulement dans B', chips(onlyB), { eyebrow: 'Dans le top 25 de B, absents du top 25 de A' })}
+      ${section(loc`Seulement dans A`, chips(onlyA), { eyebrow: loc`Dans le top 25 de A, absents du top 25 de B` })}
+      ${section(loc`Dans les deux`, chips(both.slice(0, 12)), { eyebrow: loc`${both.length} artistes en commun` })}
+      ${section(loc`Seulement dans B`, chips(onlyB), { eyebrow: loc`Dans le top 25 de B, absents du top 25 de A` })}
     </div>
-    ${section('À quelle heure', `<div class="chart">${hourLines(sa.heat, sb.heat)}</div><div class="legend"><span><i style="background:${CA}"></i>A</span><span><i style="background:${CB}"></i>B</span></div><p class="note">Part de l'écoute de chaque période qui tombe à chaque heure.</p>`, { eyebrow: 'Profil horaire' })}`;
+    ${section(loc`À quelle heure`, `<div class="chart">${hourLines(sa.heat, sb.heat)}</div><div class="legend"><span><i style="background:${CA}"></i>A</span><span><i style="background:${CB}"></i>B</span></div><p class="note">${loc`Part de l'écoute de chaque période qui tombe à chaque heure.`}</p>`, { eyebrow: loc`Profil horaire` })}`;
 
   const go = (id, code) => {
     const next = { a: aCode, b: bCode, [id]: code };
@@ -114,7 +115,7 @@ function periods(out, p) {
 }
 
 function chips(items) {
-  if (!items.length) return '<p class="empty">Personne</p>';
+  if (!items.length) return `<p class="empty">${loc`Personne`}</p>`;
   return `<div class="chips">${items.map(e => `<a class="chip" href="${href('artist', e.id)}">${esc(DB.artists[e.id])}</a>`).join('')}</div>`;
 }
 
@@ -126,7 +127,7 @@ function hourProfile(heat) {
 }
 function hourLines(ha, hb) {
   const a = hourProfile(ha), b = hourProfile(hb);
-  return lines([{ v: a, c: CA }, { v: b, c: CB }], Array.from({ length: 24 }, (_, h) => (h % 3 === 0 ? h + ' h' : '')), v => pct(v), (i, s) => `${i} h<br>A : <b>${pct(a[i], 1)}</b><br>B : <b>${pct(b[i], 1)}</b>`);
+  return lines([{ v: a, c: CA }, { v: b, c: CB }], Array.from({ length: 24 }, (_, h) => (h % 3 === 0 ? hourLabel(h) : '')), v => pct(v), (i, s) => loc`${hourLabel(i)}<br>A : <b>${pct(a[i], 1)}</b><br>B : <b>${pct(b[i], 1)}</b>`);
 }
 
 // Courbes multiples sur un même axe.
@@ -150,7 +151,7 @@ function artists(out, p) {
   const b = Number.isInteger(+p.b) && p.b !== undefined ? +p.b : top[1].id;
   const sa = computeStats(fullRange(), byArtist(a)), sb = computeStats(fullRange(), byArtist(b));
   const picker = (id, cur) => `<div class="cmp-pick" style="--c:${id === 'a' ? CA : CB}"><span class="cmp-tag">${id.toUpperCase()}</span>
-    <input id="in-${id}" list="art-list" value="${esc(DB.artists[cur])}" autocomplete="off" aria-label="Artiste ${id.toUpperCase()}"></div>`;
+    <input id="in-${id}" list="art-list" value="${esc(DB.artists[cur])}" autocomplete="off" aria-label="${loc`Artiste ${id.toUpperCase()}`}"></div>`;
   // Mois communs pour les deux courbes cumulées.
   const d0 = new Date(DB.firstDay * 86400000), d1 = new Date(DB.lastDay * 86400000);
   const k0 = d0.getUTCFullYear() * 12 + d0.getUTCMonth(), k1 = d1.getUTCFullYear() * 12 + d1.getUTCMonth();
@@ -158,32 +159,32 @@ function artists(out, p) {
   const ca = cum(sa), cb = cum(sb);
   const ticks = []; for (let k = k0; k <= k1; k++) ticks.push(k % 12 === 0 ? String(k / 12) : '');
   const rowsK = [
-    ['Temps d\'écoute', dur(sa.sec), dur(sb.sec)],
-    ['Streams', fmt(sa.streams), fmt(sb.streams)],
-    ['Titres écoutés', fmt(sa.nTracks), fmt(sb.nTracks)],
-    ['Jours d\'écoute', fmt(sa.activeDays), fmt(sb.activeDays)],
-    ['Passés avec Suivant', pct(sa.skips / sa.plays), pct(sb.skips / sb.plays)],
-    ['Jusqu\'au bout', pct(sa.completes / sa.plays), pct(sb.completes / sb.plays)],
-    ['Première écoute', dateFr(Math.floor(DB.global.artist.first[a] / 1440), true), dateFr(Math.floor(DB.global.artist.first[b] / 1440), true)],
-    ['Meilleur mois', bestMonth(sa), bestMonth(sb)],
+    [loc`Temps d'écoute`, dur(sa.sec), dur(sb.sec)],
+    [loc`Streams`, fmt(sa.streams), fmt(sb.streams)],
+    [loc`Titres écoutés`, fmt(sa.nTracks), fmt(sb.nTracks)],
+    [loc`Jours d'écoute`, fmt(sa.activeDays), fmt(sb.activeDays)],
+    [loc`Passés avec Suivant`, pct(sa.skips / sa.plays), pct(sb.skips / sb.plays)],
+    [loc`Jusqu'au bout`, pct(sa.completes / sa.plays), pct(sb.completes / sb.plays)],
+    [loc`Première écoute`, dateFr(Math.floor(DB.global.artist.first[a] / 1440), true), dateFr(Math.floor(DB.global.artist.first[b] / 1440), true)],
+    [loc`Meilleur mois`, bestMonth(sa), bestMonth(sb)],
   ];
   out.innerHTML = `<datalist id="art-list">${top.map(e => `<option value="${esc(DB.artists[e.id])}"></option>`).join('')}</datalist>
     <div class="cmp-picks">${picker('a', a)}${picker('b', b)}</div>
     <div class="tbl-wrap"><table class="tbl cmp-tbl"><thead><tr><th></th><th class="n">${link('artist', a)}</th><th class="n">${link('artist', b)}</th></tr></thead><tbody>
       ${rowsK.map(([l, x, y]) => `<tr><td>${l}</td><td class="n num">${x}</td><td class="n num">${y}</td></tr>`).join('')}
     </tbody></table></div>
-    ${section('La course', `<div class="chart">${lines([{ v: ca, c: CA }, { v: cb, c: CB }], ticks, v => fmt(v) + ' h', i => `${monthLabel(k0 + i)}<br>${esc(DB.artists[a])} : <b>${fmt(ca[i])} h</b><br>${esc(DB.artists[b])} : <b>${fmt(cb[i])} h</b>`)}</div>
-      <div class="legend"><span><i style="background:${CA}"></i>${esc(DB.artists[a])}</span><span><i style="background:${CB}"></i>${esc(DB.artists[b])}</span></div>`, { eyebrow: 'Temps cumulé depuis le début' })}
-    ${section('À quelle heure', `<div class="chart">${hourLines(sa.heat, sb.heat)}</div><div class="legend"><span><i style="background:${CA}"></i>${esc(DB.artists[a])}</span><span><i style="background:${CB}"></i>${esc(DB.artists[b])}</span></div>`, { eyebrow: 'Profil horaire' })}
+    ${section(loc`La course`, `<div class="chart">${lines([{ v: ca, c: CA }, { v: cb, c: CB }], ticks, v => fmt(v) + ' h', i => `${monthLabel(k0 + i)}<br>${esc(DB.artists[a])} : <b>${fmt(ca[i])} h</b><br>${esc(DB.artists[b])} : <b>${fmt(cb[i])} h</b>`)}</div>
+      <div class="legend"><span><i style="background:${CA}"></i>${esc(DB.artists[a])}</span><span><i style="background:${CB}"></i>${esc(DB.artists[b])}</span></div>`, { eyebrow: loc`Temps cumulé depuis le début` })}
+    ${section(loc`À quelle heure`, `<div class="chart">${hourLines(sa.heat, sb.heat)}</div><div class="legend"><span><i style="background:${CA}"></i>${esc(DB.artists[a])}</span><span><i style="background:${CB}"></i>${esc(DB.artists[b])}</span></div>`, { eyebrow: loc`Profil horaire` })}
     <div class="cols2">
-      ${section(`Titres de ${esc(DB.artists[a])}`, `<ol class="rank">${ranking(sa, 'track', 'sec', 10).map((e, i) => `<li><span class="rk num">${i + 1}</span>${entityCell('track', e.id)}<span class="rv num">${dur(e.sec)}</span></li>`).join('')}</ol>`, { eyebrow: 'Top 10' })}
-      ${section(`Titres de ${esc(DB.artists[b])}`, `<ol class="rank">${ranking(sb, 'track', 'sec', 10).map((e, i) => `<li><span class="rk num">${i + 1}</span>${entityCell('track', e.id)}<span class="rv num">${dur(e.sec)}</span></li>`).join('')}</ol>`, { eyebrow: 'Top 10' })}
+      ${section(loc`Titres de ${esc(DB.artists[a])}`, `<ol class="rank">${ranking(sa, 'track', 'sec', 10).map((e, i) => `<li><span class="rk num">${i + 1}</span>${entityCell('track', e.id)}<span class="rv num">${dur(e.sec)}</span></li>`).join('')}</ol>`, { eyebrow: loc`Top 10` })}
+      ${section(loc`Titres de ${esc(DB.artists[b])}`, `<ol class="rank">${ranking(sb, 'track', 'sec', 10).map((e, i) => `<li><span class="rk num">${i + 1}</span>${entityCell('track', e.id)}<span class="rv num">${dur(e.sec)}</span></li>`).join('')}</ol>`, { eyebrow: loc`Top 10` })}
     </div>`;
   const byName = new Map(DB.artists.map((n, i) => [n.toLowerCase(), i]));
   ['a', 'b'].forEach(id => {
     out.querySelector('#in-' + id).addEventListener('change', e => {
       const v = byName.get(e.target.value.trim().toLowerCase());
-      if (v === undefined) { e.target.setCustomValidity('Artiste introuvable dans ton historique'); e.target.reportValidity(); return; }
+      if (v === undefined) { e.target.setCustomValidity(loc`Artiste introuvable dans ton historique`); e.target.reportValidity(); return; }
       const next = { a, b, [id]: v };
       location.hash = `#/comparer?mode=artistes&a=${next.a}&b=${next.b}`;
     });

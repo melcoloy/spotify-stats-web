@@ -1,6 +1,7 @@
 import { DB, years, isoToDay, dayToIso, yearRange } from '../data.js';
 import { esc, fmt, dur, dateFr, MOIS, JOURS } from '../ui.js';
 import { section } from './common.js';
+import { loc } from '../i18n.js';
 
 let dayTop = null;
 function dayTopArtist() {
@@ -33,7 +34,7 @@ export function render(root) {
     const off = (jan1 + 3) % 7; // lundi = 0
     const weeks = Math.ceil((dec31 - jan1 + 1 + off) / 7);
     const W = L + weeks * (C + G), H = T + 7 * (C + G);
-    let s = `<svg viewBox="0 0 ${W} ${H}" class="cal-svg" role="img" aria-label="Calendrier ${y}">`;
+    let s = `<svg viewBox="0 0 ${W} ${H}" class="cal-svg" role="img" aria-label="${loc`Calendrier ${y}`}">`;
     [0, 2, 4, 6].forEach(r => { s += `<text x="${L - 6}" y="${T + r * (C + G) + C - 3}" text-anchor="end">${JOURS[r]}</text>`; });
     for (let m = 0; m < 12; m++) {
       const d = isoToDay(`${y}-${String(m + 1).padStart(2, '0')}-01`);
@@ -43,7 +44,7 @@ export function render(root) {
     for (let d = jan1; d <= dec31; d++) {
       const i = d - jan1 + off, w = Math.floor(i / 7), r = i % 7;
       const sec = days.get(d) || 0, out = d < DB.firstDay || d > DB.lastDay;
-      const tip = out ? `${dateFr(d)}<br>hors de l'historique` : `${dateFr(d)}<br><b>${dur(sec)}</b>${sec ? `<br>${esc(DB.artists[top.get(d)])}` : ''}`;
+      const tip = out ? loc`${dateFr(d)}<br>hors de l'historique` : `${dateFr(d)}<br><b>${dur(sec)}</b>${sec ? `<br>${esc(DB.artists[top.get(d)])}` : ''}`;
       s += `<rect x="${L + w * (C + G)}" y="${T + r * (C + G)}" width="${C}" height="${C}" rx="3" class="cl${out ? ' out' : ` l${lvl(sec)}`}" data-day="${sec ? dayToIso(d) : ''}" data-tip="${esc(tip)}"/>`;
     }
     return s + '</svg>';
@@ -60,11 +61,11 @@ export function render(root) {
     return { active, total: r.to - r.from + 1, tot, best, gap, we: we / Math.max(1, nwe), wd: wd / Math.max(1, nwd) };
   };
   root.innerHTML = `<div class="page">
-    <header class="page-h"><div class="eyebrow">Calendrier</div><h1>Chaque jour de ton historique</h1>
-      <p class="lede">Une case par jour, plus elle est vive plus tu as écouté. Les trous racontent les vacances sans réseau, les blocus ou les périodes calmes. Clique sur un jour pour voir tout ce que tu as écouté.</p></header>
-    <div class="cal-legend"><span>Rien</span>${[0, 1, 2, 3, 4, 5].map(l => `<i class="cl l${l}"></i>`).join('')}<span>Beaucoup (plus de ${dur(lv[3])})</span></div>
+    <header class="page-h"><div class="eyebrow">${loc`Calendrier`}</div><h1>${loc`Chaque jour de ton historique`}</h1>
+      <p class="lede">${loc`Une case par jour, plus elle est vive plus tu as écouté. Les trous racontent les vacances sans réseau, les blocus ou les périodes calmes. Clique sur un jour pour voir tout ce que tu as écouté.`}</p></header>
+    <div class="cal-legend"><span>${loc`Rien`}</span>${[0, 1, 2, 3, 4, 5].map(l => `<i class="cl l${l}"></i>`).join('')}<span>${loc`Beaucoup (plus de ${dur(lv[3])})`}</span></div>
     ${ys.map(y => { const s = yearStats(y); return section(String(y), `<div class="cal-wrap">${grid(y)}</div>
-      <p class="note">${fmt(s.active)} jours sur ${fmt(s.total)} avec de la musique · série record ${fmt(s.best)} j · plus longue pause ${fmt(s.gap)} j · ${dur(s.wd)} par jour en semaine, ${dur(s.we)} le week-end</p>`, { eyebrow: dur(s.tot) }); }).join('')}
+      <p class="note">${loc`${fmt(s.active)} jours sur ${fmt(s.total)} avec de la musique · série record ${fmt(s.best)} j · plus longue pause ${fmt(s.gap)} j · ${dur(s.wd)} par jour en semaine, ${dur(s.we)} le week-end`}</p>`, { eyebrow: dur(s.tot) }); }).join('')}
   </div>`;
   root.firstElementChild.addEventListener('click', e => {
     const c = e.target.closest('[data-day]');

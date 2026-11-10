@@ -1,6 +1,7 @@
 import { DB, ranking, radio, transitions } from '../data.js';
 import { esc, fmt, pct, thumb, link, href, store, pick } from '../ui.js';
 import { section } from './common.js';
+import { loc } from '../i18n.js';
 
 export function render(root, ctx) {
   const p = ctx.params;
@@ -24,25 +25,25 @@ export function render(root, ctx) {
   const predictable = pairs.filter(x => x.n >= 10).sort((x, y) => y.p - x.p).slice(0, 8);
 
   root.innerHTML = `<div class="page">
-    <header class="page-h"><div class="eyebrow">Radio perso</div><h1>Le prochain titre</h1>
-      <p class="lede">Le site a appris, sur tes ${fmt(DB.sessionStart.length)} sessions, quel titre tu lances après quel autre (une chaîne de Markov). Choisis un titre de départ : la radio enchaîne ensuite comme toi tu l'aurais fait.</p></header>
+    <header class="page-h"><div class="eyebrow">${loc`Radio perso`}</div><h1>${loc`Le prochain titre`}</h1>
+      <p class="lede">${loc`Le site a appris, sur tes ${fmt(DB.sessionStart.length)} sessions, quel titre tu lances après quel autre (une chaîne de Markov). Choisis un titre de départ : la radio enchaîne ensuite comme toi tu l'aurais fait.`}</p></header>
     <datalist id="track-list">${top.map(e => `<option value="${esc(label(e.id))}"></option>`).join('')}</datalist>
     <div class="radio-ctl">
-      <label class="filter" for="seedIn">Titre de départ <input id="seedIn" list="track-list" value="${esc(label(seed))}" autocomplete="off"></label>
-      <button type="button" class="btn ghost" id="rnd">Au hasard</button>
-      <label class="filter small" for="lenSel">Longueur <select id="lenSel">${[10, 20, 40].map(v => `<option value="${v}" ${v === len ? 'selected' : ''}>${v} titres</option>`).join('')}</select></label>
-      <label class="filter small" for="aud">Prévisible <input type="range" id="aud" min="0.05" max="1" step="0.05" value="${audace}"> Surprenant</label>
-      <button type="button" class="btn" id="again">Relancer</button>
+      <label class="filter" for="seedIn">${loc`Titre de départ`} <input id="seedIn" list="track-list" value="${esc(label(seed))}" autocomplete="off"></label>
+      <button type="button" class="btn ghost" id="rnd">${loc`Au hasard`}</button>
+      <label class="filter small" for="lenSel">${loc`Longueur`} <select id="lenSel">${[10, 20, 40].map(v => `<option value="${v}" ${v === len ? 'selected' : ''}>${loc`${v} titres`}</option>`).join('')}</select></label>
+      <label class="filter small" for="aud">${loc`Prévisible`} <input type="range" id="aud" min="0.05" max="1" step="0.05" value="${audace}"> ${loc`Surprenant`}</label>
+      <button type="button" class="btn" id="again">${loc`Relancer`}</button>
     </div>
     <div class="radio">
       <div class="radio-player"><div id="player"></div>
-        <div class="radio-btns"><button type="button" class="btn ghost small" id="prevT">← Précédent</button><span id="pos" class="num"></span><button type="button" class="btn ghost small" id="nextT">Suivant →</button></div>
-        <p class="note">${DB.meta.demo ? 'Pas de lecteur avec les données d\'exemple : les titres sont inventés.' : 'Le lecteur Spotify passe par ton compte : ces écoutes comptent dans ton historique.'}</p></div>
+        <div class="radio-btns"><button type="button" class="btn ghost small" id="prevT">${loc`← Précédent`}</button><span id="pos" class="num"></span><button type="button" class="btn ghost small" id="nextT">${loc`Suivant →`}</button></div>
+        <p class="note">${DB.meta.demo ? loc`Pas de lecteur avec les données d'exemple : les titres sont inventés.` : loc`Le lecteur Spotify passe par ton compte : ces écoutes comptent dans ton historique.`}</p></div>
       <ol class="radio-list" id="rlist"></ol>
     </div>
     <div class="cols2">
-      ${section('Tes enchaînements fétiches', `<ol class="pairs">${pairs.slice(0, 10).map(x => `<li><span class="ent">${link('track', x.a, 'ent-name')}<small>${esc(DB.artists[DB.trackArtist[x.a]])}</small></span><span class="arrow">→</span><span class="ent">${link('track', x.b, 'ent-name')}<small>${esc(DB.artists[DB.trackArtist[x.b]])}</small></span><span class="num">${fmt(x.n)}×</span></li>`).join('')}</ol>`, { eyebrow: 'Les paires que tu enchaînes le plus' })}
-      ${section('Tes titres les plus prévisibles', `<ol class="pairs">${predictable.map(x => `<li><span class="ent">${link('track', x.a, 'ent-name')}<small>${esc(DB.artists[DB.trackArtist[x.a]])}</small></span><span class="arrow">→</span><span class="ent">${link('track', x.b, 'ent-name')}<small>${esc(DB.artists[DB.trackArtist[x.b]])}</small></span><span class="num">${pct(x.p)}</span></li>`).join('')}</ol>`, { eyebrow: 'Après eux, c\'est presque toujours le même' })}
+      ${section(loc`Tes enchaînements fétiches`, `<ol class="pairs">${pairs.slice(0, 10).map(x => `<li><span class="ent">${link('track', x.a, 'ent-name')}<small>${esc(DB.artists[DB.trackArtist[x.a]])}</small></span><span class="arrow">→</span><span class="ent">${link('track', x.b, 'ent-name')}<small>${esc(DB.artists[DB.trackArtist[x.b]])}</small></span><span class="num">${fmt(x.n)}×</span></li>`).join('')}</ol>`, { eyebrow: loc`Les paires que tu enchaînes le plus` })}
+      ${section(loc`Tes titres les plus prévisibles`, `<ol class="pairs">${predictable.map(x => `<li><span class="ent">${link('track', x.a, 'ent-name')}<small>${esc(DB.artists[DB.trackArtist[x.a]])}</small></span><span class="arrow">→</span><span class="ent">${link('track', x.b, 'ent-name')}<small>${esc(DB.artists[DB.trackArtist[x.b]])}</small></span><span class="num">${pct(x.p)}</span></li>`).join('')}</ol>`, { eyebrow: loc`Après eux, c'est presque toujours le même` })}
     </div>
   </div>`;
 
@@ -50,9 +51,9 @@ export function render(root, ctx) {
   const go = (s, l = len, a = audace) => { location.hash = `#/radio?seed=${s}&len=${l}&a=${a}`; };
   const draw = () => {
     root.querySelector('#rlist').innerHTML = list.map((x, i) => `<li class="${i === cur ? 'on' : ''}" data-i="${i}"><span class="rk num">${i + 1}</span>${thumb('track', x.id, 'sm')}<span class="ent"><span class="ent-name">${esc(DB.tracks[x.id])}</span><small>${esc(DB.artists[DB.trackArtist[x.id]])}</small></span>
-      <span class="rp" title="${i === 0 ? '' : x.via === 'titre' ? 'Part des fois où tu as enchaîné ce titre après le précédent, parmi les 12 suites les plus fréquentes' : 'Aucun enchaînement connu : la radio passe à l\'artiste que tu écoutes souvent ensuite'}">${i === 0 ? 'départ' : x.via === 'titre' ? pct(x.p) : 'via l\'artiste'}</span><a class="rgo" href="${href('track', x.id)}" title="Page du titre">↗</a></li>`).join('');
+      <span class="rp" title="${i === 0 ? '' : x.via === 'titre' ? loc`Part des fois où tu as enchaîné ce titre après le précédent, parmi les 12 suites les plus fréquentes` : loc`Aucun enchaînement connu : la radio passe à l'artiste que tu écoutes souvent ensuite`}">${i === 0 ? loc`départ` : x.via === 'titre' ? pct(x.p) : loc`via l'artiste`}</span><a class="rgo" href="${href('track', x.id)}" title="${loc`Page du titre`}">↗</a></li>`).join('');
     const u = DB.trackUri[list[cur].id];
-    root.querySelector('#player').innerHTML = u ? `<iframe class="embed" title="Lecteur Spotify" src="https://open.spotify.com/embed/track/${u}?theme=0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>` : '<p class="empty">Pas de lien Spotify pour ce titre.</p>';
+    root.querySelector('#player').innerHTML = u ? `<iframe class="embed" title="${loc`Lecteur Spotify`}" src="https://open.spotify.com/embed/track/${u}?theme=0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>` : `<p class="empty">${loc`Pas de lien Spotify pour ce titre.`}</p>`;
     root.querySelector('#pos').textContent = `${cur + 1} / ${list.length}`;
   };
   root.querySelector('#rlist').addEventListener('click', e => {
@@ -68,7 +69,7 @@ export function render(root, ctx) {
   root.querySelector('#aud').addEventListener('change', e => go(seed, len, +e.target.value));
   root.querySelector('#seedIn').addEventListener('change', e => {
     const id = byLabel.get(e.target.value.trim().toLowerCase());
-    if (id === undefined) { e.target.setCustomValidity('Choisis un titre dans la liste'); e.target.reportValidity(); return; }
+    if (id === undefined) { e.target.setCustomValidity(loc`Choisis un titre dans la liste`); e.target.reportValidity(); return; }
     go(id);
   });
   root.querySelector('#seedIn').addEventListener('input', e => e.target.setCustomValidity(''));

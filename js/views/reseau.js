@@ -1,6 +1,7 @@
 import { DB, coListenGraph, louvain } from '../data.js';
 import { esc, fmt, dur, store, href } from '../ui.js';
 import { section } from './common.js';
+import { loc } from '../i18n.js';
 
 const PALETTE = ['#FF6B57', '#FFD166', '#6EC5FF', '#B892FF', '#5EE6A8', '#E8457A', '#FF9F43', '#9AD0EC', '#F78FB3', '#C9E265'];
 
@@ -8,7 +9,7 @@ export function render(root, ctx) {
   const size = store.get('net-size', 80);
   const g = coListenGraph(ctx.range, size);
   if (g.nodes.length < 3 || !g.edges.length) {
-    root.innerHTML = `<div class="page"><header class="page-h"><h1>Ton réseau d'artistes</h1></header><div class="empty-page"><p>Pas assez de sessions sur cette période pour relier tes artistes. Élargis la période.</p></div></div>`;
+    root.innerHTML = `<div class="page"><header class="page-h"><h1>${loc`Ton réseau d'artistes`}</h1></header><div class="empty-page"><p>${loc`Pas assez de sessions sur cette période pour relier tes artistes. Élargis la période.`}</p></div></div>`;
     return;
   }
   const comm = louvain(g.nodes.length, g.edges);
@@ -28,15 +29,15 @@ export function render(root, ctx) {
   }).filter(x => x.k >= 2).sort((a, b) => b.k - a.k || b.n.sec - a.n.sec).slice(0, 6);
 
   root.innerHTML = `<div class="page">
-    <header class="page-h"><div class="eyebrow">${esc(ctx.periodLabel)}</div><h1>Ton réseau d'artistes</h1>
-      <p class="lede">Deux artistes sont reliés quand tu les écoutes souvent dans les mêmes sessions. L'algorithme de Louvain regroupe ensuite les artistes en communautés : tes « blocs » musicaux. Plus le trait est épais, plus le lien est fort.</p></header>
-    <div class="toolbar"><label class="filter small" for="netSize">Artistes affichés <select id="netSize">${[40, 80, 120].map(v => `<option value="${v}" ${v === size ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
-      <span class="note">${fmt(g.nSessions)} sessions analysées · ${fmt(g.edges.length)} liens · ${multi.length} communautés</span></div>
-    <div class="net-wrap"><canvas id="net" aria-label="Graphe des artistes écoutés ensemble"></canvas><p class="net-help">Survole un artiste pour voir ses liens, clique pour ouvrir sa page, glisse pour le déplacer.</p></div>
-    ${section('Tes communautés', `<div class="clusters">${multi.map(c => `<div class="cluster" style="--c:${c.color}">
-        <div class="cl-h"><b>Bloc ${esc(DB.artists[c.list[0].id])}</b><span class="num">${dur(c.sec)}</span></div>
-        <p>${c.list.slice(0, 10).map(n => `<a href="${href('artist', n.id)}">${esc(DB.artists[n.id])}</a>`).join(', ')}${c.list.length > 10 ? ` et ${c.list.length - 10} autres` : ''}</p></div>`).join('')}</div>`, { eyebrow: 'Détectées automatiquement' })}
-    ${bridges.length ? section('Les passerelles', `<p class="lede">Ces artistes font le lien entre plusieurs de tes blocs.</p><ul class="bridges">${bridges.map(b => `<li><a href="${href('artist', b.n.id)}">${esc(DB.artists[b.n.id])}</a><span>relié à ${b.k + 1} communautés</span></li>`).join('')}</ul>`, { eyebrow: 'Entre les blocs' }) : ''}
+    <header class="page-h"><div class="eyebrow">${esc(ctx.periodLabel)}</div><h1>${loc`Ton réseau d'artistes`}</h1>
+      <p class="lede">${loc`Deux artistes sont reliés quand tu les écoutes souvent dans les mêmes sessions. L'algorithme de Louvain regroupe ensuite les artistes en communautés : tes « blocs » musicaux. Plus le trait est épais, plus le lien est fort.`}</p></header>
+    <div class="toolbar"><label class="filter small" for="netSize">${loc`Artistes affichés`} <select id="netSize">${[40, 80, 120].map(v => `<option value="${v}" ${v === size ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+      <span class="note">${loc`${fmt(g.nSessions)} sessions analysées · ${fmt(g.edges.length)} liens · ${multi.length} communautés`}</span></div>
+    <div class="net-wrap"><canvas id="net" aria-label="${loc`Graphe des artistes écoutés ensemble`}"></canvas><p class="net-help">${loc`Survole un artiste pour voir ses liens, clique pour ouvrir sa page, glisse pour le déplacer.`}</p></div>
+    ${section(loc`Tes communautés`, `<div class="clusters">${multi.map(c => `<div class="cluster" style="--c:${c.color}">
+        <div class="cl-h">${loc`<b>Bloc ${esc(DB.artists[c.list[0].id])}</b>`}<span class="num">${dur(c.sec)}</span></div>
+        <p>${c.list.slice(0, 10).map(n => `<a href="${href('artist', n.id)}">${esc(DB.artists[n.id])}</a>`).join(', ')}${c.list.length > 10 ? ` ${loc`et ${c.list.length - 10} autres`}` : ''}</p></div>`).join('')}</div>`, { eyebrow: loc`Détectées automatiquement` })}
+    ${bridges.length ? section(loc`Les passerelles`, `<p class="lede">${loc`Ces artistes font le lien entre plusieurs de tes blocs.`}</p><ul class="bridges">${bridges.map(b => `<li><a href="${href('artist', b.n.id)}">${esc(DB.artists[b.n.id])}</a><span>${loc`relié à ${b.k + 1} communautés`}</span></li>`).join('')}</ul>`, { eyebrow: loc`Entre les blocs` }) : ''}
   </div>`;
   root.querySelector('#netSize').addEventListener('change', e => { store.set('net-size', +e.target.value); ctx.rerender(); });
   return draw(root.querySelector('#net'), g, clusters);
@@ -49,6 +50,16 @@ function draw(canvas, g, clusters) {
   const maxW = Math.max(...g.edges.map(e => e.w));
   const adj = Array.from({ length: N }, () => new Set());
   g.edges.forEach(e => { adj[e.a].add(e.b); adj[e.b].add(e.a); });
+  // Un artiste sans aucun lien n'apporte rien au graphe et partirait au bord : on ne l'affiche pas.
+  nodes.forEach((n, i) => { n.lonely = adj[i].size === 0; });
+  // Pour la disposition, chaque artiste ne garde que ses 6 liens les plus forts : sinon un graphe dense
+  // se tasse en une pelote illisible. Tous les liens restent dessinés.
+  const strongest = Array.from({ length: N }, () => []);
+  g.edges.forEach((e, k) => { strongest[e.a].push(k); strongest[e.b].push(k); });
+  const keep = new Set();
+  strongest.forEach(list => list.sort((x, y) => g.edges[y].w - g.edges[x].w).slice(0, 6).forEach(k => keep.add(k)));
+  const springs = g.edges.filter((_, k) => keep.has(k));
+  const REPEL = 900 * Math.min(2, Math.max(1, springs.length / N / 3));
 
   // Simulation de forces simple : répulsion, ressorts sur les liens, attraction vers le centre de la communauté.
   const step = alpha => {
@@ -56,13 +67,14 @@ function draw(canvas, g, clusters) {
     for (const n of nodes) { const c = cx.get(n.c) || { x: 0, y: 0, k: 0 }; c.x += n.x; c.y += n.y; c.k++; cx.set(n.c, c); }
     for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
       const a = nodes[i], b = nodes[j];
+      if (a.lonely || b.lonely) continue;
       let dx = b.x - a.x, dy = b.y - a.y, d2 = dx * dx + dy * dy + 0.01;
       const min = a.r + b.r + 6;
-      const f = 900 / d2 + (d2 < min * min ? 0.6 * (min - Math.sqrt(d2)) / Math.sqrt(d2) : 0);
+      const f = REPEL / d2 + (d2 < min * min ? 0.6 * (min - Math.sqrt(d2)) / Math.sqrt(d2) : 0);
       dx *= f; dy *= f;
       a.vx -= dx * alpha; a.vy -= dy * alpha; b.vx += dx * alpha; b.vy += dy * alpha;
     }
-    for (const e of g.edges) {
+    for (const e of springs) {
       const a = nodes[e.a], b = nodes[e.b];
       const dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
       const target = 60 + (a.r + b.r), k = 0.02 + 0.08 * e.w / maxW;
@@ -71,6 +83,7 @@ function draw(canvas, g, clusters) {
     }
     for (const n of nodes) {
       const c = cx.get(n.c);
+      if (n.lonely) continue;
       n.vx += ((c.x / c.k) - n.x) * 0.01 * alpha - n.x * 0.004 * alpha;
       n.vy += ((c.y / c.k) - n.y) * 0.01 * alpha - n.y * 0.004 * alpha;
       if (n.fixed) { n.vx = n.vy = 0; continue; }
@@ -89,7 +102,8 @@ function draw(canvas, g, clusters) {
     const dpr = window.devicePixelRatio || 1;
     canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.height = H + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const xs = nodes.map(n => n.x), ys = nodes.map(n => n.y);
+    const shown = nodes.filter(n => !n.lonely);
+    const xs = shown.map(n => n.x), ys = shown.map(n => n.y);
     const minX = Math.min(...xs) - 30, maxX = Math.max(...xs) + 30, minY = Math.min(...ys) - 30, maxY = Math.max(...ys) + 30;
     scale = Math.min(W / (maxX - minX), H / (maxY - minY));
     ox = W / 2 - scale * (minX + maxX) / 2; oy = H / 2 - scale * (minY + maxY) / 2;
@@ -109,6 +123,7 @@ function draw(canvas, g, clusters) {
     }
     ctx.globalAlpha = 1;
     nodes.forEach((n, i) => {
+      if (n.lonely) return;
       const on = focus < 0 || i === focus || adj[focus].has(i);
       ctx.globalAlpha = on ? 1 : 0.18;
       ctx.fillStyle = clusters[n.c].color;
@@ -117,6 +132,7 @@ function draw(canvas, g, clusters) {
     });
     ctx.textAlign = 'center';
     nodes.forEach((n, i) => {
+      if (n.lonely) return;
       const on = focus < 0 ? n.r > 9 : (i === focus || adj[focus].has(i));
       if (!on) return;
       ctx.globalAlpha = 1;
@@ -130,7 +146,7 @@ function draw(canvas, g, clusters) {
   const pick = ev => {
     const r = canvas.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top;
     let best = -1, bd = 1e9;
-    nodes.forEach((n, i) => { const d = Math.hypot(sx(n) - x, sy(n) - y); if (d < n.r * Math.max(0.7, scale) + 6 && d < bd) { bd = d; best = i; } });
+    nodes.forEach((n, i) => { if (n.lonely) return; const d = Math.hypot(sx(n) - x, sy(n) - y); if (d < n.r * Math.max(0.7, scale) + 6 && d < bd) { bd = d; best = i; } });
     return { i: best, x, y };
   };
   const onMove = ev => {
@@ -144,7 +160,7 @@ function draw(canvas, g, clusters) {
     }
     const p = pick(ev);
     if (p.i !== hover) { hover = p.i; canvas.style.cursor = hover >= 0 ? 'pointer' : 'default'; paint(); }
-    canvas.title = hover >= 0 ? `${DB.artists[nodes[hover].id]} — ${dur(nodes[hover].sec)}, ${adj[hover].size} liens` : '';
+    canvas.title = hover >= 0 ? loc`${DB.artists[nodes[hover].id]} — ${dur(nodes[hover].sec)}, ${adj[hover].size} liens` : '';
   };
   const onDown = ev => { const p = pick(ev); if (p.i >= 0) { drag = p.i; moved = false; canvas.setPointerCapture(ev.pointerId); } };
   const onUp = () => {

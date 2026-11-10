@@ -1,7 +1,7 @@
 // Service worker : le site reste utilisable sans internet une fois ouvert une première fois.
 // Fichiers du site : réseau d'abord (les modifications s'affichent tout de suite),
 // copie locale si le réseau ne répond pas. Pochettes : copie locale d'abord.
-const VERSION = 'spotify-stats-web-v2';
+const VERSION = 'spotify-stats-web-v3';
 const SHELL = [
   './',
   'index.html',
@@ -17,6 +17,8 @@ const SHELL = [
   'js/demo.js',
   'js/covers.js',
   'js/account.js',
+  'js/i18n.js',
+  'js/i18n-en.js',
   'js/vendor/fflate.js',
   'data/world.json',
   'icons/icon.svg',

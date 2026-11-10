@@ -1,7 +1,8 @@
 import { DB, fullRange, yearRange, years, ranking, discoveries, computeStats, byArtist, isoToDay } from '../data.js';
-import { esc, fmt, dur, MOIS, eraColor, eraLegend, link, delta, dateFr, entityCell } from '../ui.js';
+import { esc, fmt, dur, MOIS, eraColor, eraLegend, link, delta, dateFr, entityCell, daysShort } from '../ui.js';
 import { timeChart } from '../charts.js';
 import { section } from './common.js';
+import { loc } from '../i18n.js';
 
 export function render(root, ctx) {
   const full = ctx.statsFor(fullRange(), { eras: true });
@@ -19,13 +20,13 @@ export function render(root, ctx) {
     return `<article class="year" style="--c:${eraColor(a.id)}">
       <div class="year-h"><span class="year-y num">${y}</span><span class="num">${dur(st.sec)} ${prev && !partial ? delta(st.sec, prev) : ''}</span></div>
       <dl>
-        <dt>Artiste</dt><dd>${link('artist', a.id)} <span class="num">${dur(a.sec)}</span></dd>
-        <dt>Titre</dt><dd>${link('track', t.id)} <span class="num">${fmt(t.streams)}×</span></dd>
-        <dt>Album</dt><dd>${link('album', al.id)}</dd>
-        <dt>Nouveaux</dt><dd>${fmt(disc)} artistes découverts</dd>
+        <dt>${loc`Artiste`}</dt><dd>${link('artist', a.id)} <span class="num">${dur(a.sec)}</span></dd>
+        <dt>${loc`Titre`}</dt><dd>${link('track', t.id)} <span class="num">${fmt(t.streams)}×</span></dd>
+        <dt>${loc`Album`}</dt><dd>${link('album', al.id)}</dd>
+        <dt>${loc`Nouveaux`}</dt><dd>${loc`${fmt(disc)} artistes découverts`}</dd>
       </dl>
-      <div class="year-a"><button type="button" class="btn small" data-year="${y}">Explorer ${y}</button><a class="btn small ghost" href="#/wrapped/${y}">Wrapped ${y}</a></div>
-      ${partial ? `<p class="note">Année incomplète dans l'historique.</p>` : ''}
+      <div class="year-a"><button type="button" class="btn small" data-year="${y}">${loc`Explorer ${y}`}</button><a class="btn small ghost" href="#/wrapped/${y}">${loc`Wrapped ${y}`}</a></div>
+      ${partial ? `<p class="note">${loc`Année incomplète dans l'historique.`}</p>` : ''}
     </article>`;
   }).join('');
 
@@ -40,13 +41,13 @@ export function render(root, ctx) {
     }).join('')).join('')}</div></div>`;
 
   root.innerHTML = `<div class="page">
-    <header class="page-h"><div class="eyebrow">Tout l'historique</div><h1>Ta chronologie</h1>
-      <p class="lede">Tes années, tes ères et la course entre tes artistes favoris depuis ${ys[0]}. Clique sur une année ou un mois pour explorer cette période.</p></header>
-    ${section('Tes ères', `<div class="chart">${timeChart(full, { eras: true })}</div><div class="legend">${eraLegend()}</div>`, { eyebrow: 'Heures par mois' })}
-    ${section('Année par année', `<div class="years">${cards}</div>`, { eyebrow: `${ys.length} années` })}
+    <header class="page-h"><div class="eyebrow">${loc`Tout l'historique`}</div><h1>${loc`Ta chronologie`}</h1>
+      <p class="lede">${loc`Tes années, tes ères et la course entre tes artistes favoris depuis ${ys[0]}. Clique sur une année ou un mois pour explorer cette période.`}</p></header>
+    ${section(loc`Tes ères`, `<div class="chart">${timeChart(full, { eras: true })}</div><div class="legend">${eraLegend()}</div>`, { eyebrow: loc`Heures par mois` })}
+    ${section(loc`Année par année`, `<div class="years">${cards}</div>`, { eyebrow: loc`${ys.length} années` })}
     ${projection(ctx)}
-    ${section('Ton n°1, mois par mois', grid, { eyebrow: 'Grille' })}
-    ${section('La course', `<div class="chart">${race()}</div><p class="note">Temps d'écoute cumulé de tes huit artistes les plus écoutés. Survole une courbe pour la mettre en avant.</p>`, { eyebrow: 'Cumul depuis le début' })}
+    ${section(loc`Ton n°1, mois par mois`, grid, { eyebrow: loc`Grille` })}
+    ${section(loc`La course`, `<div class="chart">${race()}</div><p class="note">${loc`Temps d'écoute cumulé de tes huit artistes les plus écoutés. Survole une courbe pour la mettre en avant.`}</p>`, { eyebrow: loc`Cumul depuis le début` })}
   </div>`;
 
   root.firstElementChild.addEventListener('click', e => {
@@ -85,7 +86,7 @@ function race() {
   const max = Math.max(...series.map(s => s.pts[n - 1]));
   const step = max > 400 ? 100 : max > 150 ? 50 : 25, topV = Math.ceil(max / step) * step;
   const x = i => L + (W - L - R) * i / Math.max(1, n - 1), y = v => T + (H - T - B) * (1 - v / topV);
-  let s = `<svg viewBox="0 0 ${W} ${H}" class="chart-svg race" role="img" aria-label="Temps cumulé par artiste">`;
+  let s = `<svg viewBox="0 0 ${W} ${H}" class="chart-svg race" role="img" aria-label="${loc`Temps cumulé par artiste`}">`;
   for (let v = 0; v <= topV; v += step) s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" class="grid"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v} h</text>`;
   for (let k = k0; k <= k1; k++) if (k % 12 === 0) s += `<text x="${x(k - k0)}" y="${H - 6}">${k / 12}</text>`;
   // Étiquettes de fin sans chevauchement.
@@ -129,16 +130,16 @@ function projection(ctx) {
   const rows = (list, kind) => `<ol class="rank">${list.slice(0, 5).map((e, i) => {
     const now = ranking(cur, kind, 'sec', 200).findIndex(x => x.id === e.id);
     const mv = now === i ? '<span class="mv">=</span>' : `<span class="mv ${now > i ? 'up' : 'down'}">${now > i ? '▲' : '▼'} ${Math.abs(now - i)}</span>`;
-    return `<li><span class="rk num">${i + 1}</span>${entityCell(kind, e.id)}<span class="rv num">${dur(e.proj)}<small>aujourd'hui ${dur(e.sec)}</small>${mv}</span></li>`;
+    return `<li><span class="rk num">${i + 1}</span>${entityCell(kind, e.id)}<span class="rv num">${loc`${dur(e.proj)}<small>aujourd'hui ${dur(e.sec)}</small>${mv}`}</span></li>`;
   }).join('')}</ol>`;
-  return section(`Projection de ton Wrapped ${y}`, `
+  return section(loc`Projection de ton Wrapped ${y}`, `
     <div class="kpis">
-      <div class="kpi"><div class="kpi-v num">${fmt(cur.sec / 3600)} h</div><div class="kpi-k">Au ${dateFr(DB.lastDay, true)}</div></div>
-      <div class="kpi"><div class="kpi-v num">≈ ${fmt(projSec / 3600)} h</div><div class="kpi-k">Estimation au 31 décembre</div></div>
-      <div class="kpi"><div class="kpi-v num">≈ ${fmt(projSec / 60)}</div><div class="kpi-k">Minutes, comme sur le vrai Wrapped</div></div>
-      <div class="kpi"><div class="kpi-v num">${fmt(remaining)} j</div><div class="kpi-k">Restants dans l'année</div></div>
+      <div class="kpi"><div class="kpi-v num">${fmt(cur.sec / 3600)} h</div><div class="kpi-k">${loc`Au ${dateFr(DB.lastDay, true)}`}</div></div>
+      <div class="kpi"><div class="kpi-v num">≈ ${fmt(projSec / 3600)} h</div><div class="kpi-k">${loc`Estimation au 31 décembre`}</div></div>
+      <div class="kpi"><div class="kpi-v num">≈ ${fmt(projSec / 60)}</div><div class="kpi-k">${loc`Minutes, comme sur le vrai Wrapped`}</div></div>
+      <div class="kpi"><div class="kpi-v num">${daysShort(remaining)}</div><div class="kpi-k">${loc`Restants dans l'année`}</div></div>
     </div>
-    <div class="cols2">${section('Artistes', rows(proj('artist'), 'artist'), { eyebrow: 'Top 5 estimé' })}${section('Titres', rows(proj('track'), 'track'), { eyebrow: 'Top 5 estimé' })}</div>
-    <p class="note">Le total suppose que ta fin d'année ressemblera à celle des ${ratios.length} années complètes précédentes (en moyenne, elles ont ajouté ${fmt(100 * ratio)} % après le ${dateFr(DB.lastDay, true).replace(/ \d{4}$/, '')}). Le classement prolonge le rythme de chaque artiste et titre sur les ${recentDays} derniers jours. Spotify arrête de compter vers la mi-novembre pour son Wrapped officiel, donc ses chiffres seront un peu plus bas.</p>`,
-    { eyebrow: 'Estimation' });
+    <div class="cols2">${section(loc`Artistes`, rows(proj('artist'), 'artist'), { eyebrow: loc`Top 5 estimé` })}${section(loc`Titres`, rows(proj('track'), 'track'), { eyebrow: loc`Top 5 estimé` })}</div>
+    <p class="note">${loc`Le total suppose que ta fin d'année ressemblera à celle des ${ratios.length} années complètes précédentes (en moyenne, elles ont ajouté ${fmt(100 * ratio)} % après le ${dateFr(DB.lastDay, true).replace(/ \d{4}$/, '')}). Le classement prolonge le rythme de chaque artiste et titre sur les ${recentDays} derniers jours. Spotify arrête de compter vers la mi-novembre pour son Wrapped officiel, donc ses chiffres seront un peu plus bas.`}</p>`,
+    { eyebrow: loc`Estimation` });
 }

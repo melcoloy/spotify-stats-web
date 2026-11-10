@@ -14,84 +14,85 @@
 <body class="importing">
   <section id="importScreen" class="imp" hidden>
     <div class="imp-in">
-      <a class="brand" href="./"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>Spotify Stats</a>
-      <h1>Tout ton historique Spotify, enfin lisible.</h1>
-      <p class="imp-lede">Dépose ton export Spotify : tops par année, ères musicales, calendrier jour par jour, sessions, récap animé façon Wrapped… depuis la création de ton compte.</p>
+      <div class="imp-top"><a class="brand" href="./"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>Spotify Stats</a><div id="impLang"></div></div>
+      <h1 data-i18n>Tout ton historique Spotify, enfin lisible.</h1>
+      <p class="imp-lede" data-i18n>Dépose ton export Spotify : tops par année, ères musicales, calendrier jour par jour, sessions, récap animé façon Wrapped… depuis la création de ton compte.</p>
 
       <label class="drop" for="files">
         <input type="file" id="files" accept=".zip,.json,application/zip,application/json" multiple>
-        <span class="drop-t">Dépose ici le zip reçu de Spotify</span>
-        <span class="drop-s">ou clique pour le choisir · tu peux déposer les deux exports ensemble (historique étendu + données du compte)</span>
+        <span class="drop-t" data-i18n>Dépose ici le zip reçu de Spotify</span>
+        <span class="drop-s" data-i18n>ou clique pour le choisir · tu peux déposer les deux exports ensemble (historique étendu + données du compte)</span>
       </label>
       <p id="importStatus" class="imp-status" role="status" aria-live="polite"></p>
-      <p class="imp-demo">Pas encore ton export ? <button type="button" class="linkbtn" id="demoBtn">Essayer avec des données d'exemple</button></p>
-      <label class="imp-keep" for="remember"><input type="checkbox" id="remember" checked> Garder mes données dans ce navigateur pour la prochaine visite</label>
+      <p class="imp-demo"><span data-i18n>Pas encore ton export ?</span> <button type="button" class="linkbtn" id="demoBtn" data-i18n>Essayer avec des données d'exemple</button></p>
+      <label class="imp-keep" for="remember"><input type="checkbox" id="remember" checked> <span data-i18n>Garder mes données dans ce navigateur pour la prochaine visite</span></label>
 
       <div class="imp-grid">
         <div>
-          <h2>Tes données restent chez toi</h2>
-          <p>Le fichier est lu et analysé directement dans ton navigateur. Rien n'est envoyé sur un serveur : le site n'en a pas. Tu peux tout effacer à tout moment avec « Changer de données ».</p>
+          <h2 data-i18n>Tes données restent chez toi</h2>
+          <p data-i18n>Le fichier est lu et analysé directement dans ton navigateur. Rien n'est envoyé sur un serveur : le site n'en a pas. Tu peux tout effacer à tout moment avec « Changer de données ».</p>
         </div>
         <div>
-          <h2>Obtenir ton export</h2>
+          <h2 data-i18n>Obtenir ton export</h2>
           <ol>
-            <li>Va sur <a href="https://www.spotify.com/account/privacy/" target="_blank" rel="noopener">spotify.com/account/privacy</a> (depuis un navigateur, pas l'appli).</li>
-            <li>Coche <b>« Historique de streaming étendu »</b> et demande les données.</li>
-            <li>Confirme via l'e-mail de Spotify.</li>
-            <li>Quelques jours plus tard (jusqu'à 30), télécharge le zip reçu par e-mail et dépose-le ici.</li>
+            <li data-i18n>Va sur <a href="https://www.spotify.com/account/privacy/" target="_blank" rel="noopener">spotify.com/account/privacy</a> (depuis un navigateur, pas l'appli).</li>
+            <li data-i18n>Coche <b>« Historique de streaming étendu »</b> et demande les données.</li>
+            <li data-i18n>Confirme via l'e-mail de Spotify.</li>
+            <li data-i18n>Quelques jours plus tard (jusqu'à 30), télécharge le zip reçu par e-mail et dépose-le ici.</li>
           </ol>
-          <p class="imp-note">L'export « Données du compte » (sur la même page) ajoute ton Wrapped officiel, le portrait de tes goûts selon Spotify, tes catégories publicitaires, tes recherches et tes playlists : dépose-le en même temps. Seul, il ne couvre que la dernière année d'écoute.</p>
+          <p class="imp-note" data-i18n>L'export « Données du compte » (sur la même page) ajoute ton Wrapped officiel, le portrait de tes goûts selon Spotify, tes catégories publicitaires, tes recherches et tes playlists : dépose-le en même temps. Seul, il ne couvre que la dernière année d'écoute.</p>
         </div>
       </div>
-      <p class="imp-foot">Projet indépendant et open source, non affilié à Spotify.</p>
+      <p class="imp-foot" data-i18n>Projet indépendant et open source, non affilié à Spotify.</p>
     </div>
   </section>
 
   <div class="app">
     <aside class="side">
       <a class="brand" href="#/"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>Spotify Stats</a>
-      <nav class="nav" aria-label="Navigation principale">
-        <span class="nav-g">Stats</span>
-        <a href="#/" data-nav="overview">Vue d'ensemble</a>
-        <a href="#/classements" data-nav="rankings">Classements</a>
-        <a href="#/explorer" data-nav="explore">Explorer</a>
-        <a href="#/chronologie" data-nav="timeline">Chronologie</a>
-        <a href="#/calendrier" data-nav="calendrier">Calendrier</a>
-        <a href="#/ce-jour-la" data-nav="cejour">Ce jour-là</a>
-        <a href="#/comparer" data-nav="comparer">Comparer</a>
-        <span class="nav-g">Analyses</span>
-        <a href="#/sessions" data-nav="sessions">Sessions</a>
-        <a href="#/obsessions" data-nav="obsessions">Obsessions</a>
-        <a href="#/albums" data-nav="albums">Albums</a>
-        <a href="#/reseau" data-nav="reseau">Réseau</a>
-        <a href="#/voyages" data-nav="voyages">Voyages</a>
-        <a href="#/podcasts" data-nav="podcasts">Podcasts</a>
-        <a href="#/spotify" data-nav="spotify">Ce que Spotify sait</a>
-        <span class="nav-g">Pour le fun</span>
-        <a href="#/radio" data-nav="radio">Radio perso</a>
-        <a href="#/wrapped" data-nav="wrapped">Wrapped</a>
-        <a href="#/jeux" data-nav="games">Jeux</a>
+      <nav class="nav" aria-label="Navigation principale" data-i18n-attr="aria-label">
+        <span class="nav-g" data-i18n>Stats</span>
+        <a href="#/" data-nav="overview" data-i18n>Vue d'ensemble</a>
+        <a href="#/classements" data-nav="rankings" data-i18n>Classements</a>
+        <a href="#/explorer" data-nav="explore" data-i18n>Explorer</a>
+        <a href="#/chronologie" data-nav="timeline" data-i18n>Chronologie</a>
+        <a href="#/calendrier" data-nav="calendrier" data-i18n>Calendrier</a>
+        <a href="#/ce-jour-la" data-nav="cejour" data-i18n>Ce jour-là</a>
+        <a href="#/comparer" data-nav="comparer" data-i18n>Comparer</a>
+        <span class="nav-g" data-i18n>Analyses</span>
+        <a href="#/sessions" data-nav="sessions" data-i18n>Sessions</a>
+        <a href="#/obsessions" data-nav="obsessions" data-i18n>Obsessions</a>
+        <a href="#/albums" data-nav="albums" data-i18n>Albums</a>
+        <a href="#/reseau" data-nav="reseau" data-i18n>Réseau</a>
+        <a href="#/voyages" data-nav="voyages" data-i18n>Voyages</a>
+        <a href="#/podcasts" data-nav="podcasts" data-i18n>Podcasts</a>
+        <a href="#/spotify" data-nav="spotify" data-i18n>Ce que Spotify sait</a>
+        <span class="nav-g" data-i18n>Pour le fun</span>
+        <a href="#/radio" data-nav="radio" data-i18n>Radio perso</a>
+        <a href="#/wrapped" data-nav="wrapped" data-i18n>Wrapped</a>
+        <a href="#/jeux" data-nav="games" data-i18n>Jeux</a>
       </nav>
       <div class="side-foot">
         <p id="sideFoot"></p>
-        <button type="button" class="linkbtn" id="resetData">Changer de données</button>
+        <button type="button" class="linkbtn" id="resetData" data-i18n>Changer de données</button>
+        <div id="sideLang"></div>
       </div>
     </aside>
 
     <div class="main">
       <header class="topbar" id="topbar">
         <div class="search">
-          <label for="q" class="sr-only">Rechercher un artiste, un album ou un titre</label>
-          <input id="q" type="search" placeholder="Rechercher un artiste, un album, un titre…" autocomplete="off" spellcheck="false">
+          <label for="q" class="sr-only" data-i18n>Rechercher un artiste, un album ou un titre</label>
+          <input id="q" type="search" data-i18n-attr="placeholder" placeholder="Rechercher un artiste, un album, un titre…" autocomplete="off" spellcheck="false">
           <div class="search-res" id="searchRes" hidden></div>
         </div>
         <div class="period" id="periodBar">
-          <label for="preset" class="sr-only">Période</label>
+          <label for="preset" class="sr-only" data-i18n>Période</label>
           <select id="preset"></select>
           <span class="custom" id="customDates" hidden>
-            <label for="from" class="sr-only">Du</label><input type="date" id="from">
+            <label for="from" class="sr-only" data-i18n>Du</label><input type="date" id="from">
             <span aria-hidden="true">→</span>
-            <label for="to" class="sr-only">Au</label><input type="date" id="to">
+            <label for="to" class="sr-only" data-i18n>Au</label><input type="date" id="to">
           </span>
         </div>
       </header>
