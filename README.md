@@ -29,6 +29,9 @@ il n'y a pas de serveur, rien n'est envoyé nulle part.
 - **Réseau** : graphe des artistes écoutés ensemble, communautés (algorithme de Louvain).
 - **Voyages** : carte des pays d'où tu as écouté, voyages repérés automatiquement.
 - **Podcasts** : émissions et épisodes.
+- **Ce que Spotify sait** : avec l'export « Données du compte », ton Wrapped officiel comparé
+  aux calculs du site, le portrait de tes goûts rédigé par Spotify, les catégories
+  publicitaires dans lesquelles il te range, tes recherches, tes playlists.
 
 **Pour le fun**
 - **Radio perso** : une chaîne de Markov apprise sur tes sessions enchaîne les titres comme toi.
@@ -51,8 +54,10 @@ différents et propose de les retirer de tes stats.
 3. Confirme via l'e-mail de Spotify.
 4. Quelques jours plus tard (jusqu'à 30), télécharge le zip et dépose-le sur le site.
 
-L'export « Données du compte » (fichiers `StreamingHistory_music_*.json`) fonctionne aussi,
-mais il ne couvre que la dernière année et ne contient ni albums, ni appareils, ni pays.
+L'export « Données du compte », sur la même page, peut être déposé en même temps : il ajoute
+la page « Ce que Spotify sait » et les écoutes plus récentes que la fin de l'historique
+étendu. Seul, il ne couvre que la dernière année, sans albums, appareils ni pays. Les fichiers
+d'identité et de paiement de cet export ne sont jamais lus.
 
 ## Utiliser le site
 

@@ -2,6 +2,7 @@
 // et le convertit au format compact utilisé par le moteur de calcul (js/data.js).
 // Rien n'est envoyé sur internet : tout se passe dans cette page.
 import { unzipSync } from './vendor/fflate.js';
+import { ACCOUNT_FILES, buildAccount } from './account.js';
 
 const PLATFORMS = ['iPhone', 'iPad', 'Android', 'Windows', 'macOS', 'Web', 'PlayStation', 'Enceinte / TV', 'Voiture', 'Autre'];
 const REASONS_START = ['trackdone', 'fwdbtn', 'clickrow', 'playbtn', 'remote', 'backbtn', 'appload', 'trackerror', 'switched-to-audio', 'endplay', 'reconnect', 'unknown'];
@@ -29,7 +30,7 @@ function localMinute(iso) {
 }
 
 const decoder = new TextDecoder('utf-8');
-const isHistoryName = name => /Streaming_?History[^/]*\.json$/i.test(name);
+const isHistoryName = name => /Streaming_?History[^/]*\.json$/i.test(name) || ACCOUNT_FILES.test(name.split('/').pop());
 
 // Lit les fichiers choisis et renvoie la liste [{name, data}] des historiques trouvés.
 async function readFiles(files, progress) {
@@ -62,6 +63,7 @@ export function buildFromDocs(docs) {
 
   const music = [], pods = [];
   let format = 'étendu';
+  const accountDocs = docs.filter(d => ACCOUNT_FILES.test(base(d.name)));
   if (ext.length) {
     for (const d of ext) {
       const video = /_Video_/i.test(base(d.name));
@@ -70,15 +72,19 @@ export function buildFromDocs(docs) {
         else if (r.episode_name) pods.push({ t: localMinute(r.ts), name: r.episode_name, show: r.episode_show_name, uri: (r.spotify_episode_uri || '').split(':').pop(), s: Math.round(r.ms_played / 1000), v: video ? 1 : 0 });
       }
     }
-  } else if (legacy.length) {
-    // Ancien format (« Données du compte ») : moins de détails, pas d'album ni de raisons.
-    format = 'simple';
+  }
+  if (legacy.length) {
+    // Format simple (« Données du compte ») : moins de détails, pas d'album ni de raisons.
+    // Avec un historique étendu, on n'ajoute que les écoutes plus récentes que sa fin.
+    const last = music.reduce((m, x) => (x.r.ts > m ? x.r.ts : m), '');
+    if (!ext.length) format = 'simple';
     for (const d of legacy) {
       for (const r of d.data) {
+        if (ext.length && (r.endTime || '').replace(' ', 'T') + ':00Z' <= last) continue;
         const iso = (r.endTime || '').replace(' ', 'T') + ':00Z';
         if (r.trackName && r.artistName) {
           music.push({ r: { ts: iso, ms_played: r.msPlayed, master_metadata_track_name: r.trackName, master_metadata_album_artist_name: r.artistName }, video: false });
-        } else if (r.episodeName || r.podcastName) {
+        } else if (!ext.length && (r.episodeName || r.podcastName)) {
           pods.push({ t: localMinute(iso), name: r.episodeName || '(épisode)', show: r.podcastName, uri: '', s: Math.round(r.msPlayed / 1000), v: 0 });
         }
       }
@@ -138,7 +144,9 @@ export function buildFromDocs(docs) {
     pt.push(p.t); pe.push(eIdx.get(key)); ps.push(p.s); pv.push(p.v);
   }
 
+  const account = accountDocs.length ? buildAccount(Object.fromEntries(accountDocs.map(d => [base(d.name), d.data]))) : null;
   return {
+    account,
     meta: {
       version: 2, format, generated: new Date().toISOString(),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

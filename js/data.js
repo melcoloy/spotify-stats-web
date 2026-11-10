@@ -59,6 +59,7 @@ export function ingest(j) {
     countries: j.meta.countries,
     podcasts: j.podcasts,
     meta: j.meta,
+    account: j.account || null,
     firstDay: Math.floor(T[0] / 1440),
     lastDay: Math.floor(T[n - 1] / 1440),
     ready: true,

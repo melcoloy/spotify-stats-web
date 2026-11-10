@@ -23,6 +23,7 @@ import * as voyages from './views/voyages.js';
 import * as podcasts from './views/podcasts.js';
 import * as radioView from './views/radio.js';
 import * as games from './views/games.js';
+import * as spotifyView from './views/spotify.js';
 
 const view = document.getElementById('view');
 
@@ -159,6 +160,7 @@ const ROUTES = {
   podcasts: ['podcasts', podcasts, true],
   radio: ['radio', radioView, false],
   jeux: ['games', games, false],
+  spotify: ['spotify', spotifyView, false],
 };
 
 let cleanup = null;
