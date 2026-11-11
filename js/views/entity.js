@@ -1,4 +1,4 @@
-import { DB, computeStats, ranking, byArtist, byAlbum, byTrack, globalRank, artistOf, transitions, artistTransitions, dayToIso } from '../data.js';
+import { DB, computeStats, ranking, byArtist, byAlbum, byTrack, globalRank, artistOf, transitions, artistTransitions, dayToIso, STREAM_SEC } from '../data.js';
 import { esc, fmt, dur, pct, dateFr, dateOfMinute, kpi, link, monthLabel, spotifyUrl, KIND_LABEL, JOURS_LONG, thumb, entityCell, hourLabel } from '../ui.js';
 import { timeChart, heatmap } from '../charts.js';
 import { rankList, section, table, bestSlot } from './common.js';
@@ -46,7 +46,8 @@ export function render(root, ctx) {
   // Premier titre écouté (pour un artiste ou un album) sur tout l'historique.
   let firstIdx = -1;
   if (kind !== 'track') {
-    for (let i = 0; i < DB.n; i++) if (pred(i)) { firstIdx = i; break; }
+    // Premier titre écouté au moins 30 s ; à défaut, premier lancement.
+    for (let i = 0; i < DB.n; i++) if (pred(i)) { if (firstIdx < 0) firstIdx = i; if (DB.S[i] >= STREAM_SEC) { firstIdx = i; break; } }
   }
   let peak = null;
   for (const [m, s] of st.months) if (!peak || s > peak.s) peak = { m, s };

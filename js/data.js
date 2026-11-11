@@ -116,7 +116,10 @@ export function computeStats(range, pred = null, opts = {}) {
   const nT = DB.tracks.length, nA = DB.artists.length, nAl = DB.albums.length;
   const tSec = new Float64Array(nT), tStreams = new Int32Array(nT), tPlays = new Int32Array(nT);
   const tSkip = new Int32Array(nT), tDone = new Int32Array(nT), tChosen = new Int32Array(nT);
+  // Première / dernière écoute : seulement les écoutes de 30 s et plus (un titre zappé aussitôt
+  // ne compte pas). Si un titre n'a jamais été écouté 30 s, on garde ses lancements en secours.
   const tFirst = new Int32Array(nT).fill(-1), tLast = new Int32Array(nT).fill(-1);
+  const tFirstAny = new Int32Array(nT).fill(-1), tLastAny = new Int32Array(nT).fill(-1);
   const heat = new Float64Array(168);
   const platform = new Float64Array(DB.platforms.length);
   const country = new Float64Array(DB.countries.length);
@@ -137,8 +140,9 @@ export function computeStats(range, pred = null, opts = {}) {
     if (re === done) { completes++; tDone[k]++; }
     if (rs === click || rs === play) { chosen++; tChosen[k]++; }
     rStart[rs]++; rEnd[re]++;
-    if (tFirst[k] < 0) tFirst[k] = m;
-    tLast[k] = m;
+    if (tFirstAny[k] < 0) tFirstAny[k] = m;
+    tLastAny[k] = m;
+    if (s >= STREAM_SEC) { if (tFirst[k] < 0) tFirst[k] = m; tLast[k] = m; }
     const f = F[i];
     if (f & 1) shuffle++;
     if (f & 2) offline++;
@@ -170,12 +174,21 @@ export function computeStats(range, pred = null, opts = {}) {
       const a = keyOf[k];
       g.sec[a] += tSec[k]; g.streams[a] += tStreams[k]; g.plays[a] += tPlays[k]; g.skip[a] += tSkip[k];
       g.done[a] += tDone[k]; g.chosen[a] += tChosen[k]; g.tracks[a]++;
-      if (g.first[a] < 0 || tFirst[k] < g.first[a]) g.first[a] = tFirst[k];
+      if (tFirst[k] >= 0 && (g.first[a] < 0 || tFirst[k] < g.first[a])) g.first[a] = tFirst[k];
       if (tLast[k] > g.last[a]) g.last[a] = tLast[k];
+    }
+    // Artiste ou album jamais écouté 30 s : premier et dernier lancement.
+    for (let k = 0; k < nT; k++) {
+      if (!tPlays[k]) continue;
+      const a = keyOf[k];
+      if (g.streams[a]) continue;
+      if (g.first[a] < 0 || tFirstAny[k] < g.first[a]) g.first[a] = tFirstAny[k];
+      if (tLastAny[k] > g.last[a]) g.last[a] = tLastAny[k];
     }
     return g;
   };
   const artist = group(nA, trackArtist), album = group(nAl, trackAlbum);
+  for (let k = 0; k < nT; k++) if (tFirst[k] < 0) { tFirst[k] = tFirstAny[k]; tLast[k] = tLastAny[k]; }
   let nTracks = 0; for (let k = 0; k < nT; k++) if (tPlays[k]) nTracks++;
   let nArtists = 0; for (let a = 0; a < nA; a++) if (artist.plays[a]) nArtists++;
   let nAlbums = 0; for (let a = 0; a < nAl; a++) if (album.plays[a]) nAlbums++;
